@@ -4,7 +4,8 @@ One can generate a monthly report for each sponsor on the RC clusters:
 
 ```
 $ ssh <YourNetID>@della.princeton.edu
-$ git clone https://github.PrincetonUniversity/monthly_sponsor_reports.git
+$ git clone https://github.com/PrincetonUniversity/monthly_sponsor_reports.git
+$ cd monthly_sponsor_reports
 $ module load anaonda3/2021.11
 $ python monthly_sponsor_reports.py --start 2021-11-01 --end 2022-01-31 --email
 ```
