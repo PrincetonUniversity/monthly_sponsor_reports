@@ -6,6 +6,7 @@ One can generate a monthly report for each sponsor on the RC clusters:
 $ ssh <YourNetID>@della.princeton.edu
 $ git clone https://github.com/PrincetonUniversity/monthly_sponsor_reports.git
 $ cd monthly_sponsor_reports
+```
 
 Start by running the unit tests:
 
