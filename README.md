@@ -7,7 +7,7 @@ $ ssh <YourNetID>@della.princeton.edu
 $ git clone https://github.com/PrincetonUniversity/monthly_sponsor_reports.git
 $ cd monthly_sponsor_reports
 $ module load anaconda3/2021.11
-$ python -m unittest test_monthly_sponsor_reports.py -v
+$ python -m unittest tests/test_monthly_sponsor_reports.py -v
 ```
 
 If the tests all pass then do a dry run:
