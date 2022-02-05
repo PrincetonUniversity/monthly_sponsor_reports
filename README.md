@@ -8,6 +8,7 @@ $ git clone https://github.com/PrincetonUniversity/monthly_sponsor_reports.git
 $ cd monthly_sponsor_reports
 $ module load anaconda3/2021.11
 $ python -m unittest monthly_sponsor_reports.py
+```
 
 If the tests all pass then do a dry run:
 
