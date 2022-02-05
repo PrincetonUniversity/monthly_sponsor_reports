@@ -30,5 +30,5 @@ W: User yixiaoc has multiple primary sponsors: rcar,weinan. Using rcar.
 The output will be sent to stdout instead of email. If the output looks good then run once more with emails enabled:
 
 ```
-$ python monthly_sponsor_reports.py --start 2021-11-01 --end 2022-01-31
+$ python monthly_sponsor_reports.py --start 2021-11-01 --end 2022-01-31 --email
 ```
