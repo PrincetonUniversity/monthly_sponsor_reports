@@ -1,8 +1,7 @@
-#!/usr/licensed/anaconda3/2021.5/bin/python
-
 import argparse
 import os
 import time
+import math
 import subprocess
 from datetime import datetime
 from datetime import timedelta
@@ -38,8 +37,9 @@ def send_email(s, addressee, start, end, sender="cses@princeton.edu"):
 def raw_dataframe_from_sacct(flags, start_date, end_date, fields, renamings=[], numeric_fields=[], use_cache=False):
   fname = f"cache_sacct_{start_date.strftime('%Y%m%d')}.csv"
   if use_cache and os.path.exists(fname):
-    print("\nUsing cache file.\n", flush=True)
+    print("\nReading cache file ... ", end="", flush=True)
     rw = pd.read_csv(fname, low_memory=False)
+    print("done.", flush=True)
   else:
     cmd = f"sacct {flags} -S {start_date.strftime('%Y-%m-%d')}T00:00:00 -E {end_date.strftime('%Y-%m-%d')}T23:59:59 -o {fields}"
     if use_cache: print("\nCalling sacct (which may require several seconds) ... ", end="", flush=True)
@@ -70,7 +70,6 @@ def is_gpu_job(tres):
   return 1 if "gres/gpu=" in tres and not "gres/gpu=0" in tres else 0
 
 def add_new_and_derived_fields(df):
-  # new and derived fields
   df["gpus"] = df.alloctres.apply(gpus_per_job)
   df["gpu-seconds"] = df.apply(lambda row: row["elapsedraw"] * row["gpus"], axis='columns')
   df["gpu-job"] = df.alloctres.apply(is_gpu_job)
@@ -99,11 +98,22 @@ def format_user_name(s):
   else:
     return shorten(f"{names[0]} {names[-1]}")
 
+def groupby_cluster_netid(df, user_sponsor):
+  d = {"cpu-hours":np.sum, "gpu-hours":np.sum, "netid":np.size, "partition":uniq_series, "account":uniq_series}
+  dg = df.groupby(by=["cluster", "netid"]).agg(d).rename(columns={"netid":"jobs"}).reset_index()
+  dg = dg.merge(user_sponsor, on="netid", how="left")
+  dg["sponsor"] = dg.apply(lambda row: row["sponsor-dict"][row["cluster"]], axis='columns')
+  dg["name"] = dg["sponsor-dict"].apply(lambda x: x["displayname"]).apply(format_user_name)
+  dg = dg.sort_values(["cluster", "sponsor", "cpu-hours"], ascending=[True, True, False])
+  dg["cpu-hours"] = dg["cpu-hours"].apply(round).astype("int64")
+  dg["gpu-hours"] = dg["gpu-hours"].apply(round).astype("int64")
+  return dg
+
 def add_heading(x, c):
   rows = x.split("\n")
-  max_chars = max([len(row) for row in rows])
-  ct = round((max_chars - len(c) - 2) / 2)
-  divider = " " * ct + " " + c[0].upper() + c[1:] + " " + " " * ct
+  width = max([len(row) for row in rows])
+  padding = " " * max(1, math.ceil((width - len(c)) / 2))
+  divider = padding + c[0].upper() + c[1:] + padding
   rows.insert(0, divider)
   rows.insert(1, "-" * len(divider))
   rows.insert(3, "-" * len(divider))
@@ -122,19 +132,16 @@ def special_requests(sponsor, cluster, cl, start_date, end_date):
 if __name__ == "__main__":
 
   parser = argparse.ArgumentParser(description='Monthly sponsor reports')
-  parser.add_argument('--days', type=int, default=30, metavar='N',
-                      help='Create report over N previous days from now (default: 14)')
   parser.add_argument('--start', type=str, default="", metavar='S',
                       help='Start date with format YYYY-MM-DD')
   parser.add_argument('--end', type=str, default="", metavar='E',
                       help='End date with format YYYY-MM-DD')
   parser.add_argument('--email', action='store_true', default=False,
                       help='Send reports via email')
-  args = parser.parse_args()
 
+  args = parser.parse_args()
   start_date = datetime.strptime(args.start, '%Y-%m-%d')
   end_date   = datetime.strptime(args.end,   '%Y-%m-%d')
-  #start_date = datetime.now() - timedelta(days=args.days)
 
   # pandas display settings
   pd.set_option("display.max_rows", None)
@@ -156,60 +163,61 @@ if __name__ == "__main__":
   df.cluster   =   df.cluster.str.replace("tiger2", "tiger")
   df.partition = df.partition.str.replace("datascience", "datasci")
   df.partition = df.partition.str.replace("physics", "phys")
+  if not args.email: print("Adding new and derived fields (which may require several seconds) ... ", end="", flush=True)
   df = add_new_and_derived_fields(df)
+  if not args.email: print("done.", flush=True)
  
   # get sponsor info for each unique netid (this minimizes ldap calls)
   user_sponsor = df[["netid"]].drop_duplicates().sort_values("netid").copy()
+  if not args.email: print("Getting sponsor for each user (which may require several seconds) ... ", end="\n", flush=True)
   user_sponsor["sponsor-dict"] = user_sponsor.netid.apply(lambda n: sponsor_per_cluster(n, verbose=True))
 
-  # create the main dataframe
-  d = {"cpu-hours":np.sum, "gpu-hours":np.sum, "netid":np.size, "partition":uniq_series, "account":uniq_series}
-  dg = df.groupby(by=["cluster", "netid"]).agg(d).rename(columns={"netid":"jobs"}).reset_index()
-  dg = dg.merge(user_sponsor, on="netid", how="left")
-  dg["sponsor"] = dg.apply(lambda row: row["sponsor-dict"][row["cluster"]], axis='columns')
-  dg["name"] = dg["sponsor-dict"].apply(lambda x: x["displayname"]).apply(format_user_name)
-  dg = dg.sort_values(["cluster", "sponsor", "cpu-hours"], ascending=[True, True, False])
-  dg["cpu-hours"] = dg["cpu-hours"].apply(round).astype("int64")
-  dg["gpu-hours"] = dg["gpu-hours"].apply(round).astype("int64")
+  # perform a double groupby and join users to their sponsors
+  dg = groupby_cluster_netid(df, user_sponsor)
 
-  #dg.sponsor = dg.sponsor.str.replace("curt", "halverson")
+  #dg.sponsor = dg.sponsor.str.replace("curt", "jdh4")
 
   # check for null values
-  if not dg[pd.isna(dg["sponsor"])].empty: print(dg[pd.isna(dg["sponsor"])])
-  if not dg[pd.isna(dg["name"])].empty:    print(dg[pd.isna(dg["name"])])
+  if not dg[pd.isna(dg["sponsor"])].empty:
+    print("\nSponsor not found for the following users (these rows will be dropped):")
+    print(dg[pd.isna(dg["sponsor"])][["netid", "name", "cluster", "account", "sponsor"]])
+  if not dg[pd.isna(dg["name"])].empty:
+    print("\nName is missing for the following users (email reports will a show blank name):")
+    print(dg[pd.isna(dg["name"])][["netid", "name", "cluster", "account"]])
 
   # write out dataframe
   cols = ["cluster", "sponsor", "netid", "name", "cpu-hours", "gpu-hours", "jobs", "account", "partition"]
   fname = f"cluster_sponsor_user_{datetime.now().strftime('%Y%m%d')}.csv"
   dg[cols].to_csv(fname, index=True)
-  #import sys; sys.exit()
 
-  # prepare reports per sponsor
+  # create reports (each sponsor is gauranteed to have at least one user by construction above)
   cols = ["netid", "name", "cpu-hours", "gpu-hours", "jobs", "account", "partition"]
   renamings = {"netid":"NetID", "name":"Name", "cpu-hours":"CPU-hours", "gpu-hours":"GPU-hours", \
                "jobs":"Jobs", "account":"Account", "partition":"Partition(s)"}
   clusters = ("della", "stellar", "tiger", "traverse")
   #sponsors = dg[pd.notnull(dg.sponsor)].sponsor.sort_values().unique()
+  #import sys; sys.exit()
   sponsors = ["jtromp", "vonholdt", "pdebene", "azp", "rcar", "mawebb", "muellerm", "gvecchi", "curt"]
   for sponsor in sponsors:
-    s = ""
     name = sponsor_full_name(sponsor, verbose=True)
     sp = dg[dg.sponsor == sponsor]
+    body = ""
     for cluster in clusters:
       cl = sp[sp.cluster == cluster]
       if not cl.empty:
-        s += "\n"
-        s += add_heading(cl[cols].rename(columns=renamings).to_string(index=False, justify="center"), cluster)
-        s += special_requests(sponsor, cluster, cl, start_date, end_date)
-        s += "\n\n"
-    # each sponsor is gauranteed to have at least one user by construction
-    S = "\n"
-    S += f"Sponsor: {name} ({sponsor})\n"
-    fmt = "%b %-d, %Y"
-    S += f" Period: {start_date.strftime(fmt)} - {end_date.strftime(fmt)}\n\n"
-    S += s
-    S += "\nOnly users that ran at least one job during the reporting period appear in\nthe table(s) above. Replying to this email will open a ticket with CSES.\n"
+        body += "\n"
+        body += add_heading(cl[cols].rename(columns=renamings).to_string(index=False, justify="center"), cluster)
+        body += special_requests(sponsor, cluster, cl, start_date, end_date)
+        body += "\n\n"
+    # insert body into report
+    report  = f"\nSponsor: {name} ({sponsor})\n"
+    report += f" Period: {start_date.strftime('%b %-d, %Y')} - {end_date.strftime('%b %-d, %Y')}\n\n"
+    report += body
+    report += "\nOnly users that ran at least one job during the reporting period appear in\n"
+    report += "the table(s) above. Replying to this email will open a ticket with CSES.\n"
 
-    send_email(S, "halverson@princeton.edu", start_date, end_date) if args.email else print(S)
-    #send_email(S, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(S)
-    #if sponsor == "macohen": send_email(S, "bdorland@pppl.gov", start_date, end_date) if args.email else print(S)
+    # output report by email or to stdout
+    send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
+    #send_email(report, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(report)
+    #if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date) if args.email else print(report)
+    #if sponsor == "curt": send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
