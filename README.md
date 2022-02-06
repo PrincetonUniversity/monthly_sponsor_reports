@@ -15,7 +15,7 @@ $ module load anaconda3/2021.11
 $ python -m unittest tests/test_monthly_sponsor_reports.py -v
 ```
 
-If the tests all pass then do a dry run:
+If the tests all pass then do a dry run (which takes a few minutes):
 
 ```
 $ python monthly_sponsor_reports.py --start 2021-11-01 --end 2022-01-31
