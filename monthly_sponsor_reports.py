@@ -98,7 +98,7 @@ def format_user_name(s):
   else:
     return shorten(f"{names[0]} {names[-1]}")
 
-def groupby_cluster_netid(df, user_sponsor):
+def groupby_cluster_netid_and_get_sponsor(df, user_sponsor):
   d = {"cpu-hours":np.sum, "gpu-hours":np.sum, "netid":np.size, "partition":uniq_series, "account":uniq_series}
   dg = df.groupby(by=["cluster", "netid"]).agg(d).rename(columns={"netid":"jobs"}).reset_index()
   dg = dg.merge(user_sponsor, on="netid", how="left")
@@ -109,11 +109,20 @@ def groupby_cluster_netid(df, user_sponsor):
   dg["gpu-hours"] = dg["gpu-hours"].apply(round).astype("int64")
   return dg
 
-def add_heading(x, c):
-  rows = x.split("\n")
+def check_for_nulls(dg):
+  if not dg[pd.isna(dg["sponsor"])].empty:
+    print("\nSponsor not found for the following users (these rows will be dropped):")
+    print(dg[pd.isna(dg["sponsor"])][["netid", "name", "cluster", "account", "sponsor"]])
+  if not dg[pd.isna(dg["name"])].empty:
+    print("\nName is missing for the following users (email reports will a show blank name):")
+    print(dg[pd.isna(dg["name"])][["netid", "name", "cluster", "account"]])
+  return None
+
+def add_heading(df_str, cluster):
+  rows = df_str.split("\n")
   width = max([len(row) for row in rows])
-  padding = " " * max(1, math.ceil((width - len(c)) / 2))
-  divider = padding + c[0].upper() + c[1:] + padding
+  padding = " " * max(1, math.ceil((width - len(cluster)) / 2))
+  divider = padding + cluster[0].upper() + cluster[1:] + padding
   rows.insert(0, divider)
   rows.insert(1, "-" * len(divider))
   rows.insert(3, "-" * len(divider))
@@ -127,6 +136,14 @@ def special_requests(sponsor, cluster, cl, start_date, end_date):
     return f"\n\nPercent usage of Tromp GPU nodes is {round(100 * gpu_hours_used / gpu_hours_available, 1)}%."
   else:
     return ""
+
+def create_report(name, sponsor, start_date, end_date, body):
+  report  = f"\nSponsor: {name} ({sponsor})\n"
+  report += f" Period: {start_date.strftime('%b %-d, %Y')} - {end_date.strftime('%b %-d, %Y')}\n\n"
+  report += body
+  report += "\nOnly users that ran at least one job during the reporting period appear in\n"
+  report += "the table(s) above. Replying to this email will open a ticket with CSES.\n"
+  return report
 
 
 if __name__ == "__main__":
@@ -173,50 +190,38 @@ if __name__ == "__main__":
   user_sponsor["sponsor-dict"] = user_sponsor.netid.apply(lambda n: sponsor_per_cluster(n, verbose=True))
 
   # perform a double groupby and join users to their sponsors
-  dg = groupby_cluster_netid(df, user_sponsor)
+  dg = groupby_cluster_netid_and_get_sponsor(df, user_sponsor)
+  check_for_nulls(dg)
 
   #dg.sponsor = dg.sponsor.str.replace("curt", "jdh4")
 
-  # check for null values
-  if not dg[pd.isna(dg["sponsor"])].empty:
-    print("\nSponsor not found for the following users (these rows will be dropped):")
-    print(dg[pd.isna(dg["sponsor"])][["netid", "name", "cluster", "account", "sponsor"]])
-  if not dg[pd.isna(dg["name"])].empty:
-    print("\nName is missing for the following users (email reports will a show blank name):")
-    print(dg[pd.isna(dg["name"])][["netid", "name", "cluster", "account"]])
-
-  # write out dataframe
+  # write dataframe to file for archiving
   cols = ["cluster", "sponsor", "netid", "name", "cpu-hours", "gpu-hours", "jobs", "account", "partition"]
   fname = f"cluster_sponsor_user_{datetime.now().strftime('%Y%m%d')}.csv"
-  dg[cols].to_csv(fname, index=True)
+  dg[cols].to_csv(fname, index=False)
 
-  # create reports (each sponsor is gauranteed to have at least one user by construction above)
+  # create reports (each sponsor is guaranteed to have at least one user by construction above)
   cols = ["netid", "name", "cpu-hours", "gpu-hours", "jobs", "account", "partition"]
   renamings = {"netid":"NetID", "name":"Name", "cpu-hours":"CPU-hours", "gpu-hours":"GPU-hours", \
                "jobs":"Jobs", "account":"Account", "partition":"Partition(s)"}
-  clusters = ("della", "stellar", "tiger", "traverse")
-  #sponsors = dg[pd.notnull(dg.sponsor)].sponsor.sort_values().unique()
-  #import sys; sys.exit()
+  sponsors = dg[pd.notnull(dg.sponsor)].sponsor.sort_values().unique()
+  print(sponsors)
+  print(f"Total sponsors: {sponsors.size}")
+  print(f"Total users:    {dg.netid.unique().size}")
+  print(f"Total jobs:     {df.shape[0]}")
   sponsors = ["jtromp", "vonholdt", "pdebene", "azp", "rcar", "mawebb", "muellerm", "gvecchi", "curt"]
   for sponsor in sponsors:
     name = sponsor_full_name(sponsor, verbose=True)
     sp = dg[dg.sponsor == sponsor]
     body = ""
-    for cluster in clusters:
+    for cluster in ("della", "stellar", "tiger", "traverse"):
       cl = sp[sp.cluster == cluster]
       if not cl.empty:
         body += "\n"
         body += add_heading(cl[cols].rename(columns=renamings).to_string(index=False, justify="center"), cluster)
         body += special_requests(sponsor, cluster, cl, start_date, end_date)
         body += "\n\n"
-    # insert body into report
-    report  = f"\nSponsor: {name} ({sponsor})\n"
-    report += f" Period: {start_date.strftime('%b %-d, %Y')} - {end_date.strftime('%b %-d, %Y')}\n\n"
-    report += body
-    report += "\nOnly users that ran at least one job during the reporting period appear in\n"
-    report += "the table(s) above. Replying to this email will open a ticket with CSES.\n"
-
-    # output report by email or to stdout
+    report = create_report(name, sponsor, start_date, end_date, body)
     send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
     #send_email(report, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(report)
     #if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date) if args.email else print(report)
