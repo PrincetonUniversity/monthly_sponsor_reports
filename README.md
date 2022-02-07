@@ -37,3 +37,11 @@ The output will be sent to stdout instead of email for the dry run. If the outpu
 ```
 $ python monthly_sponsor_reports.py --start 2021-11-01 --end 2022-01-31 --email
 ```
+
+## Cron
+
+These reports run under cron on tigergpu:
+
+```
+[jdh4@tigergpu ~]$ crontab -l
+```
