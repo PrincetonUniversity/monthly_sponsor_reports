@@ -1,6 +1,32 @@
 # Monthly Sponsor Reports
 
-One can generate a monthly report for each sponsor on the RC clusters:
+One can generate a monthly report for each sponsor on the RC clusters. Here is an example:
+
+```
+Sponsor: Bridgett M. vonHoldt (vonholdt)
+ Period: Nov 1, 2021 - Jan 31, 2022
+
+
+                                   Della                                   
+---------------------------------------------------------------------------
+ NetID          Name         CPU-hours  GPU-hours  Jobs Account Partition(s)
+---------------------------------------------------------------------------
+  ak9020      Alex Kirschel   29388        0       1389   eeb           cpu 
+  sg9464   Stephen Gaughran    7233        0      13465   eeb           cpu 
+vonholdt  Bridgett vonHoldt    4793        0         63   eeb   cpu,datasci 
+ mmishra        Maya Mishra    2980        0        103   eeb           cpu 
+ dtandon      Dhriti Tandon    2287        0        255   eeb           cpu 
+  st5978   Stavi Tennenbaum    2069        0         27   eeb           cpu 
+  sh4805         Sam Hervey     397        0         59   eeb           cpu 
+decandia Alexandra DeCandia      31        0         14   eeb           cpu 
+csarabia     Carlos Sarabia       0        0          3   eeb           cpu 
+
+
+Only users that ran at least one job during the reporting period appear in
+the table(s) above. Replying to this email will open a ticket with CSES.
+```
+
+Obtain the code:
 
 ```
 $ ssh <YourNetID>@della.princeton.edu
@@ -8,7 +34,7 @@ $ git clone https://github.com/PrincetonUniversity/monthly_sponsor_reports.git
 $ cd monthly_sponsor_reports
 ```
 
-Start by running the unit tests:
+Run the unit tests:
 
 ```
 $ module load anaconda3/2021.11
