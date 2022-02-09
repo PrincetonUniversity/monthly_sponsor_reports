@@ -1,6 +1,6 @@
 # Monthly Sponsor Reports
 
-One can generate a monthly report for each sponsor on the RC clusters. Here is an example:
+The software in this repo is used generate monthly sponsor reports. Here is an example report:
 
 ```
 Sponsor: Alan M. Turing (aturing)
