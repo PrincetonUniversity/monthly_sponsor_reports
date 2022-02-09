@@ -1,6 +1,6 @@
 # Monthly Sponsor Reports
 
-The software in this repo is used generate monthly sponsor reports. Here is an example report:
+The software in this repo generates monthly sponsor reports for the large Research Computing clusters. Here is an example report:
 
 ```
 Sponsor: Alan M. Turing (aturing)
