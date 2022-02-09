@@ -67,3 +67,9 @@ These reports run under cron on tigergpu:
 ```
 [jdh4@tigergpu ~]$ crontab -l
 ```
+
+## Be Aware
+
+- A sponsor will only receive a report if one of their users ran at least one job in the reporting period.  
+- If the sponsor is not found a given user then that user is dropped for the given cluster. These events can be seen in the output.  
+- The script must be run on a machine that can talk to ldap1.rc.princeton.edu.  
