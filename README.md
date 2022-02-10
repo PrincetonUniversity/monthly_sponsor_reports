@@ -15,11 +15,11 @@ rfeynman      Richard Feynman       7233        0     3465   phys           cpu
    tmorr        Toni Morrison        182        6      255    lit       cpu,gpu 
 
                                    Tiger                                   
-----------------------------------------------------------------------------
- NetID          Name         CPU-hours  GPU-hours  Jobs Account Partition(s)
-----------------------------------------------------------------------------
-  conway     John Conway       99219          0     152   math    serial,cpu 
-  plewis     Peter Lewis        8071       2042   11092    pol           gpu 
+-------------------------------------------------------------------------------
+ NetID           Name           CPU-hours  GPU-hours  Jobs Account Partition(s)
+-------------------------------------------------------------------------------
+  conway     John Conway           99219        0      152   math    serial,cpu 
+  plewis     Peter Lewis            8071     2042    11092    pol           gpu 
 
 Only users that ran at least one job during the reporting period appear in
 the table(s) above. Replying to this email will open a ticket with CSES.
