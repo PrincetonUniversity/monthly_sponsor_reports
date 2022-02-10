@@ -22,6 +22,8 @@ Only users that ran at least one job during the reporting period appear in
 the table(s) above. Replying to this email will open a ticket with CSES.
 ```
 
+## Usage
+
 Obtain the code:
 
 ```
@@ -37,7 +39,7 @@ $ module load anaconda3/2021.11
 $ python -m unittest tests/test_monthly_sponsor_reports.py -v
 ```
 
-If the tests all pass then do a dry run (which takes a few minutes):
+If all of the tests pass then do a dry run (which takes a few minutes):
 
 ```
 $ python monthly_sponsor_reports.py --start 2021-11-01 --end 2022-01-31
