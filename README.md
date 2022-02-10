@@ -6,17 +6,20 @@ The software in this repo generates monthly sponsor reports for the large Resear
 Sponsor: Alan M. Turing (aturing)
  Period: Nov 1, 2021 - Jan 31, 2022
 
-
                                    Della                                   
----------------------------------------------------------------------------
- NetID          Name         CPU-hours  GPU-hours  Jobs Account Partition(s)
----------------------------------------------------------------------------
-  ak9002      Alex Kirkwood   29388        0       1389   math           cpu 
-  sg9644   Stephen Goodroot    7233        0      13465   math           cpu 
-dunnlake          Dunn Lake    4793        0         63    cs   cpu,datasci 
-   mmbog           Maya Bog    2980        0        103   math           cpu 
-  pdtree     Paul Dancetree    2287        6        255   math       cpu,gpu 
+-------------------------------------------------------------------------------
+ NetID           Name           CPU-hours  GPU-hours  Jobs Account Partition(s)
+-------------------------------------------------------------------------------
+rfeynman      Richard Feynman       7233        0     3465   phys           cpu 
+ fitzger  F. Scott Fitzgerald       4793        0       63    lit   cpu,datasci  
+   tmorr        Toni Morrison        182        6      255    lit       cpu,gpu 
 
+                                   Tiger                                   
+----------------------------------------------------------------------------
+ NetID          Name         CPU-hours  GPU-hours  Jobs Account Partition(s)
+----------------------------------------------------------------------------
+  conway     John Conway       99219          0     152   math    serial,cpu 
+  plewis     Peter Lewis        8071       2042   11092    pol           gpu 
 
 Only users that ran at least one job during the reporting period appear in
 the table(s) above. Replying to this email will open a ticket with CSES.
