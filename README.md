@@ -29,7 +29,7 @@ the table(s) above. Replying to this email will open a ticket with CSES.
 
 Obtain the code:
 
-```
+```bash
 $ ssh <YourNetID>@della.princeton.edu
 $ git clone https://github.com/PrincetonUniversity/monthly_sponsor_reports.git
 $ cd monthly_sponsor_reports
@@ -37,14 +37,14 @@ $ cd monthly_sponsor_reports
 
 Run the unit tests:
 
-```
+```bash
 $ module load anaconda3/2021.11
 $ python -m unittest tests/test_monthly_sponsor_reports.py -v
 ```
 
 If all of the tests pass then do a dry run (which takes a few minutes):
 
-```
+```bash
 $ python monthly_sponsor_reports.py --start 2021-11-01 --end 2022-01-31
 ```
 
@@ -61,7 +61,7 @@ W: User yixiaoc has multiple primary sponsors: rcar,weinan. Using rcar.
 
 The output will be sent to stdout instead of email for the dry run. If the output looks good then run once more with emails enabled:
 
-```
+```bash
 $ python monthly_sponsor_reports.py --start 2021-11-01 --end 2022-01-31 --email
 ```
 
