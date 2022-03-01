@@ -3,10 +3,12 @@ import os
 import time
 import math
 import subprocess
+import textwrap
 from datetime import datetime
 from datetime import timedelta
 import numpy as np
 import pandas as pd
+from random import random
 
 from sponsor import sponsor_full_name
 from sponsor import sponsor_per_cluster
@@ -22,7 +24,7 @@ HOURS_PER_DAY = 24
 
 def send_email(s, addressee, start, end, sender="cses@princeton.edu"):
   msg = MIMEMultipart('alternative')
-  msg['Subject'] = f"Slurm Accounting Report ({start.strftime('%-m/%-d/%Y')} - {end.strftime('%-m/%-d/%Y')})"
+  msg['Subject'] = f"Slurm Accounting Report ({start.strftime('%b %-d, %Y')} - {end.strftime('%b %-d, %Y')})"
   msg['From'] = sender
   msg['To'] = addressee
   text = "None"
@@ -69,6 +71,21 @@ def gpus_per_job(tres):
 def is_gpu_job(tres):
   return 1 if "gres/gpu=" in tres and not "gres/gpu=0" in tres else 0
 
+def add_proportion_in_parenthesis(dframe, column_name, replace=False):
+  if dframe.shape[0] == 1: return dframe
+  dframe["proportion"] = 100 * dframe[column_name] / dframe[column_name].sum()
+  dframe["proportion"] = dframe["proportion"].apply(round)
+  name = column_name if replace else f"{column_name}-cmb"
+  dframe[name] = dframe.apply(lambda row: f"{round(row[column_name])} ({row['proportion']}%)", axis='columns')
+  dframe = dframe.drop(columns=["proportion"])
+  # align cpu-hours by adding spaces before proportion
+  max_chars = max([item.index(")") - item.index("(") for item in dframe[name]])
+  def add_spaces(item):
+    num_spaces_to_add = max_chars - (item.index(")") - item.index("("))
+    return item[:item.index("(")] + " " * num_spaces_to_add + item[item.index("("):]
+  dframe[name] = dframe[name].apply(add_spaces)
+  return dframe
+
 def add_new_and_derived_fields(df):
   df["gpus"] = df.alloctres.apply(gpus_per_job)
   df["gpu-seconds"] = df.apply(lambda row: row["elapsedraw"] * row["gpus"], axis='columns')
@@ -84,7 +101,7 @@ def uniq_series(series):
   return ",".join(sorted(set(series)))
 
 def shorten(name):
-  if len(name) > 18:
+  if len(name) > 14:
     first, last = name.split()
     return f"{first[0]}. {last}"
   else:
@@ -141,8 +158,17 @@ def create_report(name, sponsor, start_date, end_date, body):
   report  = f"\nSponsor: {name} ({sponsor})\n"
   report += f" Period: {start_date.strftime('%b %-d, %Y')} - {end_date.strftime('%b %-d, %Y')}\n\n"
   report += body
-  report += "\nOnly users that ran at least one job during the reporting period appear in\n"
-  report += "the table(s) above. Replying to this email will open a ticket with CSES.\n"
+  footer = """
+  You are receiving this report because you sponsor researchers on the
+  Research Computing systems. The report above shows the researchers
+  that you sponsor as well as their cluster usage. Only researchers
+  that ran at least one job during the reporting period appear in the
+  table(s) above.
+
+  Replying to this email will open a ticket with CSES. Please reply
+  with questions/comments or to unsubscribe from these reports.
+  """
+  report += textwrap.dedent(footer)
   return report
 
 
@@ -191,13 +217,16 @@ if __name__ == "__main__":
 
   # perform a double groupby and join users to their sponsors
   dg = groupby_cluster_netid_and_get_sponsor(df, user_sponsor)
-  check_for_nulls(dg)
+  _ = check_for_nulls(dg)
 
-  #dg.sponsor = dg.sponsor.str.replace("curt", "jdh4")
+  # sanity checks
+  d = {"della":"curt", "stellar":"curt", "tiger":"wtang", "traverse":"curt", "displayname":"Garrett Wright"}
+  assert sponsor_per_cluster(netid="gbwright") == d, "RC LDAP may be down"
+  assert dg.shape[0] > 100, "Not enough records in dataframe dg"
 
   # write dataframe to file for archiving
   cols = ["cluster", "sponsor", "netid", "name", "cpu-hours", "gpu-hours", "jobs", "account", "partition"]
-  fname = f"cluster_sponsor_user_{datetime.now().strftime('%Y%m%d')}.csv"
+  fname = f"cluster_sponsor_user_{start_date.strftime('%-d%b%Y')}_{end_date.strftime('%-d%b%Y')}.csv"
   dg[cols].to_csv(fname, index=False)
 
   # create reports (each sponsor is guaranteed to have at least one user by construction above)
@@ -205,11 +234,14 @@ if __name__ == "__main__":
   renamings = {"netid":"NetID", "name":"Name", "cpu-hours":"CPU-hours", "gpu-hours":"GPU-hours", \
                "jobs":"Jobs", "account":"Account", "partition":"Partition(s)"}
   sponsors = dg[pd.notnull(dg.sponsor)].sponsor.sort_values().unique()
-  print(sponsors)
   print(f"Total sponsors: {sponsors.size}")
   print(f"Total users:    {dg.netid.unique().size}")
   print(f"Total jobs:     {df.shape[0]}")
-  sponsors = ["jtromp", "vonholdt", "pdebene", "azp", "rcar", "mawebb", "muellerm", "gvecchi", "curt"]
+
+  # remove unsubscribed sponsors
+  unsubscribed = ["mzaletel"]
+  sponsors = set(sponsors) - set(unsubscribed)
+
   for sponsor in sponsors:
     name = sponsor_full_name(sponsor, verbose=True)
     sp = dg[dg.sponsor == sponsor]
@@ -217,12 +249,13 @@ if __name__ == "__main__":
     for cluster in ("della", "stellar", "tiger", "traverse"):
       cl = sp[sp.cluster == cluster]
       if not cl.empty:
+        cl = add_proportion_in_parenthesis(cl.copy(), "cpu-hours", replace=True)
         body += "\n"
         body += add_heading(cl[cols].rename(columns=renamings).to_string(index=False, justify="center"), cluster)
         body += special_requests(sponsor, cluster, cl, start_date, end_date)
         body += "\n\n"
     report = create_report(name, sponsor, start_date, end_date, body)
-    send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
-    #send_email(report, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(report)
-    #if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date) if args.email else print(report)
-    #if sponsor == "curt": send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
+    #send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
+    send_email(report, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(report)
+    if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date) if args.email else print(report)
+    if random() < 0.05: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
