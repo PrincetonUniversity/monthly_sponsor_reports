@@ -21,8 +21,14 @@ rfeynman      Richard Feynman       7233        0     3465   phys           cpu
   conway     John Conway           99219        0      152   math    serial,cpu 
   plewis     Peter Lewis            8071     2042    11092    pol           gpu 
 
-Only users that ran at least one job during the reporting period appear in
-the table(s) above. Replying to this email will open a ticket with CSES.
+You are receiving this report because you sponsor researchers on the
+Research Computing systems. The report above shows the researchers
+that you sponsor as well as their cluster usage. Only researchers
+that ran at least one job during the reporting period appear in the
+table(s) above.
+
+Replying to this email will open a ticket with CSES. Please reply
+with questions/comments or to unsubscribe from these reports.
 ```
 
 ## Usage
