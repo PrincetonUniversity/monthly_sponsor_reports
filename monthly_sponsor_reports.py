@@ -37,7 +37,7 @@ def send_email(s, addressee, start, end, sender="cses@princeton.edu"):
   return None
 
 def raw_dataframe_from_sacct(flags, start_date, end_date, fields, renamings=[], numeric_fields=[], use_cache=False):
-  fname = f"cache_sacct_{start_date.strftime('%Y%m%d')}.csv"
+  fname = f"cache_sacct.csv"
   if use_cache and os.path.exists(fname):
     print("\nReading cache file ... ", end="", flush=True)
     rw = pd.read_csv(fname, low_memory=False)
@@ -255,7 +255,6 @@ if __name__ == "__main__":
         body += special_requests(sponsor, cluster, cl, start_date, end_date)
         body += "\n\n"
     report = create_report(name, sponsor, start_date, end_date, body)
-    #send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
     send_email(report, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(report)
     if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date) if args.email else print(report)
     if random() < 0.05: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
