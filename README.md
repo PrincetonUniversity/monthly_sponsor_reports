@@ -8,18 +8,18 @@ Sponsor: Alan M. Turing (aturing)
 
                                    Della                                   
 -------------------------------------------------------------------------------
- NetID           Name           CPU-hours  GPU-hours  Jobs Account Partition(s)
--------------------------------------------------------------------------------
-rfeynman      Richard Feynman       7233        0     3465   phys           cpu 
- fitzger  F. Scott Fitzgerald       4793        0       63    lit   cpu,datasci  
-   tmorr        Toni Morrison        182        6      255    lit       cpu,gpu 
+ NetID          Name        CPU-hours  GPU-hours  Jobs Account Partition(s)
+---------------------------------------------------------------------------
+edevonte    Egino Devonte   7233 (59%)      0     3465   phys           cpu 
+mlakshmi   Moacir Lakshmi   4793 (39%)      0       63    lit   cpu,datasci  
+  rgozde     Robert Gözde    182  (2%)      6      255    lit       cpu,gpu 
 
                                    Tiger                                   
--------------------------------------------------------------------------------
- NetID           Name           CPU-hours  GPU-hours  Jobs Account Partition(s)
--------------------------------------------------------------------------------
-  conway     John Conway           99219        0      152   math    serial,cpu 
-  plewis     Peter Lewis            8071     2042    11092    pol           gpu 
+------------------------------------------------------------------------
+ NetID       Name        CPU-hours  GPU-hours  Jobs Account Partition(s)
+------------------------------------------------------------------------
+jiryna   Jaxson Iryna   99219 (92%)      0      152   math    serial,cpu 
+  sime    Shahnaz Ime    8071  (8%)   2042    11092    pol           gpu 
 
 You are receiving this report because you sponsor researchers on the
 Research Computing systems. The report above shows the researchers
@@ -30,6 +30,8 @@ table(s) above.
 Replying to this email will open a ticket with CSES. Please reply
 with questions/comments or to unsubscribe from these reports.
 ```
+
+The names above were created [randomly](https://www.behindthename.com/random/).
 
 ## Usage
 
