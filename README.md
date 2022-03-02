@@ -3,7 +3,7 @@
 The software in this repo generates monthly sponsor reports for the large Research Computing clusters. Below is an example report:
 
 ```
-Sponsor: Alan M. Turing (aturing)
+Sponsor: Garegin Andrea (gandrea)
  Period: Nov 1, 2021 - Jan 31, 2022
 
                                    Della                                   
