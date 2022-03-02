@@ -60,10 +60,10 @@ It is normal to see warnings like the following during the dry run:
 
 ```
 ...
-W: Sponsor entry of stf (Stephan A. Fueglistaler) found for aadcroft on stellar. Corrected to stf.
-W: Sponsor entry of USER found for ecmorale on della. Corrected to ecmorale.
-W: Primary sponsor for fj4172 taken from CSV file.
-W: User yixiaoc has multiple primary sponsors: rcar,weinan. Using rcar.
+W: Sponsor entry of mbreixo (Mari Breixo) found for jiryna on stellar. Corrected to mbreixo.
+W: Sponsor entry of USER found for ec2342 on della. Corrected to ecmorale.
+W: Primary sponsor for kb4172 taken from CSV file.
+W: User mlakshmi has multiple primary sponsors: gandrea,cbus. Using gandrea.
 ...
 ```
 
