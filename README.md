@@ -84,5 +84,6 @@ These reports run under cron on tigergpu:
 ## Be Aware
 
 - A sponsor will only receive a report if one of their users ran at least one job in the reporting period.  
-- If the sponsor is not found for a given user on a given cluster then that record is omitted. These events can be seen in the output and should be addressed.  
+- If the sponsor is not found for a given user on a given cluster then that record is omitted. These events can be seen in the output and should be addressed. 
 - The script must be executed on a machine that can talk to ldap1.rc.princeton.edu.  
+- The script can only send emails once every 27 days and has to be the 1st of the month (see "sanity checks" in Python script).  
