@@ -2,9 +2,22 @@ import sys
 sys.path.append("../")
 import unittest
 import pandas as pd
+from datetime import date
 from sponsor import sponsor_full_name
 from sponsor import sponsor_per_cluster
 import monthly_sponsor_reports as msr
+
+
+class TestDateRange(unittest.TestCase):
+
+  def test_range(self):
+    assert msr.get_date_range(date(2022,  5, 1), 1) == (date(2022,  4, 1), date(2022,  4, 30))
+    assert msr.get_date_range(date(2022,  5, 1), 3) == (date(2022,  2, 1), date(2022,  4, 30))
+    assert msr.get_date_range(date(2022,  5, 1), 7) == (date(2021, 10, 1), date(2022,  4, 30))
+    assert msr.get_date_range(date(2022,  1, 1), 3) == (date(2021, 10, 1), date(2021, 12, 31))
+    assert msr.get_date_range(date(2022,  1, 1), 1) == (date(2021, 12, 1), date(2021, 12, 31))
+    assert msr.get_date_range(date(2022, 11, 1), 5) == (date(2022,  6, 1), date(2022, 10, 31))
+    assert msr.get_date_range(date(2024,  3, 1), 5) == (date(2023, 10, 1), date(2024,  2, 29))
 
 
 class TestSponsorName(unittest.TestCase):
@@ -61,8 +74,8 @@ class TestMonthlySponsorReports(unittest.TestCase):
     df.columns = fields.split(",")
     df = msr.add_new_and_derived_fields(df)
     # construct the expected result
-    expected = [["della", "curt", "bill", "William Wichser",     round(30000/3600),           0,                   1, "cses", "cpu"],
-                ["tiger", "curt", "jdh4", "Jonathan Halverson",  round((25000+2*20000)/3600), round(10000/3600),   3, "cses", "cpu,gpu"],
+    expected = [["della", "curt", "bill",      "W. Wichser",     round(30000/3600),           0,                   1, "cses", "cpu"],
+                ["tiger", "curt", "jdh4",      "J. Halverson",   round((25000+2*20000)/3600), round(10000/3600),   3, "cses", "cpu,gpu"],
                 ["tiger", "wtang", "gbwright", "Garrett Wright", round(4*20000/3600),         round(4*20000/3600), 1, "cses", "gpu"]]
     expected = pd.DataFrame(expected)
     cols = ["cluster", "sponsor", "netid", "name", "cpu-hours", "gpu-hours", "jobs", "account", "partition"]
@@ -71,8 +84,8 @@ class TestMonthlySponsorReports(unittest.TestCase):
     expected["gpu-hours"] = expected["gpu-hours"].astype("int64")
     # get the actual result
     d1 = {"della":"curt", "stellar":"curt", "tiger":"wtang", "traverse":"curt", "displayname":"Garrett Wright"}
-    d2 = {"della":"curt", "stellar":"curt", "tiger":"curt", "traverse":"curt", "displayname":"Jonathan D. Halverson"}
-    d3 = {"della":"curt", "stellar":"curt", "tiger":"curt", "traverse":"curt", "displayname":"William Wichser"}
+    d2 = {"della":"curt", "stellar":"curt", "tiger":"curt",  "traverse":"curt", "displayname":"Jonathan D. Halverson"}
+    d3 = {"della":"curt", "stellar":"curt", "tiger":"curt",  "traverse":"curt", "displayname":"William Wichser"}
     user_sponsor = [["gbwright", d1], ["jdh4", d2], ["bill", d3]]
     user_sponsor = pd.DataFrame(user_sponsor)
     user_sponsor.columns = ["netid", "sponsor-dict"]
