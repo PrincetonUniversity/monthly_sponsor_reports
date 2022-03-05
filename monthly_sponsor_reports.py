@@ -4,8 +4,9 @@ import time
 import math
 import subprocess
 import textwrap
+import calendar
+from datetime import date
 from datetime import datetime
-from datetime import timedelta
 import numpy as np
 import pandas as pd
 from random import random
@@ -21,10 +22,27 @@ from email.mime.text import MIMEText
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = 3600
 HOURS_PER_DAY = 24
+BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
 
-def send_email(s, addressee, start, end, sender="cses@princeton.edu"):
+def get_date_range(today, N):
+  # argparse restricts values of N
+  def subtract_months(mydate, M):
+    year, month = mydate.year, mydate.month
+    month -= M
+    if month <= 0:
+      year  -= 1
+      month += 12
+    return year, month
+  year, month = subtract_months(today, N)
+  start_date = date(year, month, 1)
+  year, month = subtract_months(today, 1)
+  _, last_day_of_month = calendar.monthrange(year, month)
+  end_date = date(year, month, last_day_of_month)
+  return start_date, end_date
+
+def send_email(s, addressee, start_date, end_date, sender="cses@princeton.edu"):
   msg = MIMEMultipart('alternative')
-  msg['Subject'] = f"Slurm Accounting Report ({start.strftime('%b %-d, %Y')} - {end.strftime('%b %-d, %Y')})"
+  msg['Subject'] = f"Slurm Accounting Report ({start_date.strftime('%b %-d, %Y')} - {end_date.strftime('%b %-d, %Y')})"
   msg['From'] = sender
   msg['To'] = addressee
   text = "None"
@@ -37,14 +55,14 @@ def send_email(s, addressee, start, end, sender="cses@princeton.edu"):
   return None
 
 def raw_dataframe_from_sacct(flags, start_date, end_date, fields, renamings=[], numeric_fields=[], use_cache=False):
-  fname = f"cache_sacct.csv"
+  fname = f"{BASEPATH}/cache_sacct.csv"
   if use_cache and os.path.exists(fname):
-    print("\nReading cache file ... ", end="", flush=True)
+    print("Reading cache file ... ", end="", flush=True)
     rw = pd.read_csv(fname, low_memory=False)
     print("done.", flush=True)
   else:
     cmd = f"sacct {flags} -S {start_date.strftime('%Y-%m-%d')}T00:00:00 -E {end_date.strftime('%Y-%m-%d')}T23:59:59 -o {fields}"
-    if use_cache: print("\nCalling sacct (which may require several seconds) ... ", end="", flush=True)
+    if use_cache: print("Calling sacct (which may require several seconds) ... ", end="", flush=True)
     output = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True, timeout=300, text=True, check=True)
     if use_cache: print("done.", flush=True)
     lines = output.stdout.split('\n')
@@ -155,6 +173,8 @@ def special_requests(sponsor, cluster, cl, start_date, end_date):
     return ""
 
 def create_report(name, sponsor, start_date, end_date, body):
+  if sponsor == "cpena":   name = "Catherine J. Pena"
+  if sponsor == "javalos": name = "Jose L. Avalos"
   report  = f"\nSponsor: {name} ({sponsor})\n"
   report += f" Period: {start_date.strftime('%b %-d, %Y')} - {end_date.strftime('%b %-d, %Y')}\n\n"
   report += body
@@ -175,16 +195,20 @@ def create_report(name, sponsor, start_date, end_date, body):
 if __name__ == "__main__":
 
   parser = argparse.ArgumentParser(description='Monthly sponsor reports')
-  parser.add_argument('--start', type=str, default="", metavar='S',
-                      help='Start date with format YYYY-MM-DD')
-  parser.add_argument('--end', type=str, default="", metavar='E',
-                      help='End date with format YYYY-MM-DD')
+  #parser.add_argument('--start', type=str, default="", metavar='S',
+  #                    help='Start date with format YYYY-MM-DD')
+  #parser.add_argument('--end', type=str, default="", metavar='E',
+  #                    help='End date with format YYYY-MM-DD')
+  parser.add_argument('--months', type=int, default=3, metavar='N', choices=range(1, 8),
+                      help='Reporting period covers N previous months from now')
   parser.add_argument('--email', action='store_true', default=False,
                       help='Send reports via email')
 
   args = parser.parse_args()
-  start_date = datetime.strptime(args.start, '%Y-%m-%d')
-  end_date   = datetime.strptime(args.end,   '%Y-%m-%d')
+  #start_date = datetime.strptime(args.start, '%Y-%m-%d')
+  #end_date   = datetime.strptime(args.end,   '%Y-%m-%d')
+  start_date, end_date = get_date_range(date.today(), args.months)
+  print(f"\nReporting period: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
 
   # pandas display settings
   pd.set_option("display.max_rows", None)
@@ -219,14 +243,23 @@ if __name__ == "__main__":
   dg = groupby_cluster_netid_and_get_sponsor(df, user_sponsor)
   _ = check_for_nulls(dg)
 
-  # sanity checks
-  d = {"della":"curt", "stellar":"curt", "tiger":"wtang", "traverse":"curt", "displayname":"Garrett Wright"}
-  assert sponsor_per_cluster(netid="gbwright") == d, "RC LDAP may be down"
-  assert dg.shape[0] > 100, "Not enough records in dataframe dg"
+  # sanity checks and safeguards
+  brakefile = f"{BASEPATH}/.brakefile"
+  if args.email:
+    d = {"della":"curt", "stellar":"curt", "tiger":"wtang", "traverse":"curt", "displayname":"Garrett Wright"}
+    assert sponsor_per_cluster(netid="gbwright") == d, "RC ldap may be down"
+    assert dg.shape[0] > 100, "Not enough records in dg dataframe"
+    # script can only run once on the 1st of the month
+    assert datetime.now().strftime("%-d") == "1", "Script will only run on 1st of month"
+    if os.path.exists(brakefile):
+      seconds_since_emails_last_sent = datetime.now().timestamp() - os.path.getmtime(brakefile)
+      assert seconds_since_emails_last_sent > 27 * HOURS_PER_DAY * SECONDS_PER_HOUR, "Emails sent within last 27 days"
+  with open(brakefile, "w") as f:
+    f.write("")
 
   # write dataframe to file for archiving
   cols = ["cluster", "sponsor", "netid", "name", "cpu-hours", "gpu-hours", "jobs", "account", "partition"]
-  fname = f"cluster_sponsor_user_{start_date.strftime('%-d%b%Y')}_{end_date.strftime('%-d%b%Y')}.csv"
+  fname = f"{BASEPATH}/cluster_sponsor_user_{start_date.strftime('%-d%b%Y')}_{end_date.strftime('%-d%b%Y')}.csv"
   dg[cols].to_csv(fname, index=False)
 
   # create reports (each sponsor is guaranteed to have at least one user by construction above)
@@ -256,5 +289,6 @@ if __name__ == "__main__":
         body += "\n\n"
     report = create_report(name, sponsor, start_date, end_date, body)
     send_email(report, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(report)
+    #send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
     if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date) if args.email else print(report)
     if random() < 0.05: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
