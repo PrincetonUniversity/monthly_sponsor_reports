@@ -79,6 +79,7 @@ These reports run under cron on tigergpu:
 
 ```
 [jdh4@tigergpu ~]$ crontab -l
+56 8 1 * * /usr/licensed/anaconda3/2021.11/bin/python -u -B /home/jdh4/bin/monthly_sponsor_reports/monthly_sponsor_reports.py --months=3 --email > /home/jdh4/bin/monthly_sponsor_reports/output.log 2>&1
 ```
 
 ## Be Aware
