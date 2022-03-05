@@ -53,7 +53,7 @@ $ python -m unittest tests/test_monthly_sponsor_reports.py -v
 If all of the tests pass then do a dry run (which takes a few minutes):
 
 ```bash
-$ python monthly_sponsor_reports.py --start 2022-02-01 --end 2022-04-30
+$ python monthly_sponsor_reports.py --months=3
 ```
 
 It is normal to see warnings like the following during the dry run:
@@ -70,7 +70,7 @@ W: User mlakshmi has multiple primary sponsors: gandrea,cbus. Using gandrea.
 The output will be sent to stdout instead of email for the dry run. If the output looks good then run once more with emails enabled:
 
 ```bash
-$ python monthly_sponsor_reports.py --start 2022-02-01 --end 2022-04-30 --email
+$ python monthly_sponsor_reports.py --months=3 --email
 ```
 
 ## Cron
