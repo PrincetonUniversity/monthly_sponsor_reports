@@ -1,6 +1,6 @@
 # Monthly Sponsor Reports
 
-The software in this repo generates monthly sponsor reports for the large Research Computing clusters. Below is an example report:
+The software in this repo generates monthly sponsor reports for the Research Computing clusters. Below is an example report:
 
 ```
 Sponsor: Garegin Andrea (gandrea)
