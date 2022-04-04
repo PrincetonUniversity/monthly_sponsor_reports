@@ -22,7 +22,7 @@ from email.mime.text import MIMEText
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = 3600
 HOURS_PER_DAY = 24
-BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
+BASEPATH = os.getcwd()
 
 def get_date_range(today, N):
   # argparse restricts values of N
