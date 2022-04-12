@@ -73,6 +73,10 @@ The output will be sent to stdout instead of email for the dry run. If the outpu
 $ python monthly_sponsor_reports.py --months=3 --email
 ```
 
+## Definitions
+
+A job that runs on 4 CPU-cores for 2 hours consumes 8 CPU-hours. Similarly, a job that uses 2 GPUs for 4 hours consumes 8 GPU-hours.
+
 ## Cron
 
 These reports run under cron on tigergpu:
