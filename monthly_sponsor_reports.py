@@ -275,7 +275,7 @@ if __name__ == "__main__":
   unsubscribed = ["mzaletel"]
   sponsors = set(sponsors) - set(unsubscribed)
 
-  for sponsor in sponsors:
+  for sponsor in sorted(sponsors):
     name = sponsor_full_name(sponsor, verbose=True)
     sp = dg[dg.sponsor == sponsor]
     body = ""
