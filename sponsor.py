@@ -38,7 +38,7 @@ def sponsor_per_cluster(netid, verbose=True):
   if not displayname and verbose: print(f"W: Name not found for user {netid} in CSES LDAP.")
 
   # get all cluster-specific sponsors and name of user
-  sponsor = {"della":primary, "stellar":primary, "tiger":primary, "traverse":primary, "displayname":displayname}
+  sponsor = {"della":primary, "stellar":primary, "tiger":primary, "tigressdata":primary, "traverse":primary, "displayname":displayname}
   s = ""
   for line in lines[line_index:]:
     s += line.strip() if not line.startswith("#") else ""
