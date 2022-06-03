@@ -183,7 +183,9 @@ def create_report(name, sponsor, start_date, end_date, body):
   Research Computing systems. The report above shows the researchers
   that you sponsor as well as their cluster usage. Only researchers
   that ran at least one job during the reporting period appear in the
-  table(s) above. There is no charge for using the clusters.
+  table(s) above. There is no charge for using the systems. A 2-hour
+  job (wall-clock time) that allocates 4 CPU-cores consumes 8 CPU-hours.
+  Similarly, a 2-hour job that allocates 4 GPUs consumes 8 GPU-hours.
 
   Replying to this email will open a ticket with CSES. Please reply
   with questions/comments or to unsubscribe from these reports.
