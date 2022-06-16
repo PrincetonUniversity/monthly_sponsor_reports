@@ -6,6 +6,7 @@ The software in this repo generates monthly sponsor reports for the Research Com
 Sponsor: Garegin Andrea (gandrea)
  Period: Nov 1, 2021 - Jan 31, 2022
 
+
                                    Della                                   
 ----------------------------------------------------------------------------
  NetID          Name        CPU-hours    GPU-hours  Jobs Account Partition(s)
@@ -19,6 +20,7 @@ on Della. Your group is ranked 20 of 169 by CPU-hours used. Similarly,
 your group used 1018 GPU-hours or 1.2% of the 88329 total GPU-hours
 yielding a ranking of 18 of 169 by GPU-hours used.
 
+
                                    Tiger                                   
 -----------------------------------------------------------------------------
  NetID       Name         CPU-hours    GPU-hours   Jobs  Account Partition(s)
@@ -30,6 +32,7 @@ Your group used 1163344 CPU-hours or 3.0% of the 35509100 total CPU-hours
 on Tiger. Your group is ranked 5 of 101 by CPU-hours used. Similarly,
 your group used 3250 GPU-hours or 0.5% of the 554101 total GPU-hours
 yielding a ranking of 89 of 101 by GPU-hours used.
+
 
 You are receiving this report because you sponsor researchers on the
 Research Computing systems. The report above shows the researchers
