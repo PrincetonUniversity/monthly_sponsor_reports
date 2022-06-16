@@ -29,9 +29,9 @@ jiryna   Jaxson Iryna   1065273 (92%)        0      152    math    serial,cpu
   sime    Shahnaz Ime     98071  (8%)     3250    11092     pol           gpu 
 
 Your group used 1163344 CPU-hours or 3.0% of the 35509100 total CPU-hours
-on Tiger. Your group is ranked 5 of 101 by CPU-hours used. Similarly,
-your group used 3250 GPU-hours or 0.5% of the 554101 total GPU-hours
-yielding a ranking of 89 of 101 by GPU-hours used.
+on Tiger. Your group is ranked 7 of 101 by CPU-hours used. Similarly,
+your group used 3250 GPU-hours or 0.6% of the 554101 total GPU-hours
+yielding a ranking of 45 of 101 by GPU-hours used.
 
 
 You are receiving this report because you sponsor researchers on the
