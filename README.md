@@ -7,19 +7,29 @@ Sponsor: Garegin Andrea (gandrea)
  Period: Nov 1, 2021 - Jan 31, 2022
 
                                    Della                                   
----------------------------------------------------------------------------
- NetID          Name        CPU-hours  GPU-hours  Jobs Account Partition(s)
----------------------------------------------------------------------------
-edevonte    Egino Devonte   7233 (59%)      0     3465   phys           cpu 
-mlakshmi   Moacir Lakshmi   4793 (39%)      0       63    lit   cpu,datasci  
-  rgozde     Robert Gözde    182  (2%)      6      255    lit       cpu,gpu 
+----------------------------------------------------------------------------
+ NetID          Name        CPU-hours    GPU-hours  Jobs Account Partition(s)
+-----------------------------------------------------------------------------
+edevonte    Egino Devonte  125017 (59%)       0     3465   phys           cpu
+mlakshmi   Moacir Lakshmi   82638 (39%)       0       63    lit   cpu,datasci 
+  rgozde     Robert Gözde    4238  (2%)    1018      255    lit       cpu,gpu
+
+Your group used 211893 CPU-hours or 1.7% of the 12321247 total CPU-hours
+on Della. Your group is ranked 20 of 169 by CPU-hours used. Similarly,
+your group used 1018 GPU-hours or 1.2% of the 88329 total GPU-hours
+yielding a ranking of 18 of 169 by GPU-hours used.
 
                                    Tiger                                   
-------------------------------------------------------------------------
- NetID       Name        CPU-hours  GPU-hours  Jobs Account Partition(s)
-------------------------------------------------------------------------
-jiryna   Jaxson Iryna   99219 (92%)      0      152   math    serial,cpu 
-  sime    Shahnaz Ime    8071  (8%)   2042    11092    pol           gpu 
+-----------------------------------------------------------------------------
+ NetID       Name         CPU-hours    GPU-hours   Jobs  Account Partition(s)
+-----------------------------------------------------------------------------
+jiryna   Jaxson Iryna   1065273 (92%)        0      152    math    serial,cpu 
+  sime    Shahnaz Ime     98071  (8%)     3250    11092     pol           gpu 
+
+Your group used 1163344 CPU-hours or 3.0% of the 35509100 total CPU-hours
+on Tiger. Your group is ranked 5 of 101 by CPU-hours used. Similarly,
+your group used 3250 GPU-hours or 0.5% of the 554101 total GPU-hours
+yielding a ranking of 89 of 101 by GPU-hours used.
 
 You are receiving this report because you sponsor researchers on the
 Research Computing systems. The report above shows the researchers
