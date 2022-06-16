@@ -38,9 +38,12 @@ You are receiving this report because you sponsor researchers on the
 Research Computing systems. The report above shows the researchers
 that you sponsor as well as their cluster usage. Only researchers
 that ran at least one job during the reporting period appear in the
-table(s) above. There is no charge for using the systems. A 2-hour
-job (wall-clock time) that allocates 4 CPU-cores consumes 8 CPU-hours.
-Similarly, a 2-hour job that allocates 4 GPUs consumes 8 GPU-hours.
+table(s) above. There is no financial cost for using the systems.
+
+Definitions: A 2-hour job (wall-clock time) that allocates 4 CPU-cores
+consumes 8 CPU-hours. Similarly, a 2-hour job that allocates 4 GPUs
+consumes 8 GPU-hours. If a group is ranked 5 of 20 then it used the
+fifth most CPU-hours or GPU-hours of the 20 groups.
 
 Replying to this email will open a ticket with CSES. Please reply
 with questions/comments or to unsubscribe from these reports.
