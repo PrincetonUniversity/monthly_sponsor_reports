@@ -163,6 +163,14 @@ def add_heading(df_str, cluster):
   rows.insert(3, "-" * len(divider))
   return "\n".join(rows)
 
+def format_percent(x):
+  if x >= 10:
+    return round(x)
+  elif x >= 1:
+    return round(x, 1)
+  else:
+    return '%s' % float('%.1g' % x)
+
 def special_requests(sponsor, cluster, cl, start_date, end_date):
   if sponsor == "jtromp" and cluster == "traverse":
     days = (end_date - start_date).days
@@ -183,9 +191,12 @@ def create_report(name, sponsor, start_date, end_date, body):
   Research Computing systems. The report above shows the researchers
   that you sponsor as well as their cluster usage. Only researchers
   that ran at least one job during the reporting period appear in the
-  table(s) above. There is no charge for using the systems. A 2-hour
-  job (wall-clock time) that allocates 4 CPU-cores consumes 8 CPU-hours.
-  Similarly, a 2-hour job that allocates 4 GPUs consumes 8 GPU-hours.
+  table(s) above. There are no financial costs for using the systems.
+
+  Definitions: A 2-hour job (wall-clock time) that allocates 4 CPU-cores
+  consumes 8 CPU-hours. Similarly, a 2-hour job that allocates 4 GPUs
+  consumes 8 GPU-hours. If a group is ranked 5 of 20 then it used the
+  fifth most CPU-hours or GPU-hours of the 20 groups.
 
   Replying to this email will open a ticket with CSES. Please reply
   with questions/comments or to unsubscribe from these reports.
@@ -284,13 +295,30 @@ if __name__ == "__main__":
     for cluster in ("della", "stellar", "tiger", "traverse"):
       cl = sp[sp.cluster == cluster]
       if not cl.empty:
+        # determine where a group ranks relative to other groups per cluster
+        cpu_hours_by_sponsor = cl["cpu-hours"].sum()
+        gpu_hours_by_sponsor = cl["gpu-hours"].sum()
+        cpu_hours_total = dg[dg.cluster == cluster]["cpu-hours"].sum()
+        gpu_hours_total = dg[dg.cluster == cluster]["gpu-hours"].sum()
+        cpu_hours_pct = -1 if cpu_hours_total == 0 else format_percent(100 * cpu_hours_by_sponsor / cpu_hours_total)
+        gpu_hours_pct = -1 if gpu_hours_total == 0 else format_percent(100 * gpu_hours_by_sponsor / gpu_hours_total)
+        cpu_hours_rank  = dg[dg.cluster == cluster].groupby("sponsor").agg({"cpu-hours":np.sum}).sort_values(by="cpu-hours", ascending=False).index.get_loc(sponsor) + 1
+        gpu_hours_rank  = dg[dg.cluster == cluster].groupby("sponsor").agg({"gpu-hours":np.sum}).sort_values(by="gpu-hours", ascending=False).index.get_loc(sponsor) + 1
+        total_sponsors  = dg[dg.cluster == cluster]["sponsor"].unique().size
+
         cl = add_proportion_in_parenthesis(cl.copy(), "cpu-hours", replace=True)
         body += "\n"
         body += add_heading(cl[cols].rename(columns=renamings).to_string(index=False, justify="center"), cluster)
         body += special_requests(sponsor, cluster, cl, start_date, end_date)
+        body += f"\n\nYour group used {cpu_hours_by_sponsor} CPU-hours or {cpu_hours_pct}% of the {cpu_hours_total} total CPU-hours"
+        body += f"\non {cluster[0].upper() + cluster[1:]}. Your group is ranked {cpu_hours_rank} of {total_sponsors} by CPU-hours used."
+        if gpu_hours_by_sponsor != 0:
+          body +=  " Similarly,"
+          body += f"\nyour group used {gpu_hours_by_sponsor} GPU-hours or {gpu_hours_pct}% of the {gpu_hours_total} total GPU-hours"
+          body += f"\nyielding a ranking of {gpu_hours_rank} of {total_sponsors} by GPU-hours used."
         body += "\n\n"
     report = create_report(name, sponsor, start_date, end_date, body)
     send_email(report, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(report)
     #send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
     if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date) if args.email else print(report)
-    if random() < 0.05: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
+    if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
