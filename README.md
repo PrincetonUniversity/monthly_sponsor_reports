@@ -93,7 +93,7 @@ $ python monthly_sponsor_reports.py --months=3 --email
 
 ## Definitions
 
-A job that runs on 4 CPU-cores for 2 hours consumes 8 CPU-hours. Similarly, a job that uses 2 GPUs for 4 hours consumes 8 GPU-hours.
+A 2-hour job (wall-clock time) that allocates 4 CPU-cores consumes 8 CPU-hours. Similarly, a 2-hour job that allocates 4 GPUs consumes 8 GPU-hours. If a group is ranked 5 of 20 then it used the fifth most CPU-hours or GPU-hours of the 20 groups.
 
 ## Cron
 
@@ -109,4 +109,5 @@ These reports run under cron on tigergpu:
 - A sponsor will only receive a report if one of their users ran at least one job in the reporting period.  
 - If the sponsor is not found for a given user on a given cluster then that record is omitted. These events can be seen in the output and should be addressed. 
 - The script must be executed on a machine that can talk to ldap1.rc.princeton.edu.  
-- The script is written to only send emails once on the 1st of the month and then not again for at least 27 days (see `.brakefile` in "sanity checks and safeguards" in Python script).
+- The script is written to only send emails once on the 1st of the month and then not again for at least 27 days (see `.brakefile` in "sanity checks and safeguards" in Python script).  
+- Rankings on Stellar are over all groups, i.e., the PU/PPPL and CIMES portions are not separated.
