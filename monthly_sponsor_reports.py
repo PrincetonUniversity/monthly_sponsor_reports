@@ -22,7 +22,8 @@ from email.mime.text import MIMEText
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = 3600
 HOURS_PER_DAY = 24
-BASEPATH = os.getcwd()
+#BASEPATH = os.getcwd()
+BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
 
 def get_date_range(today, N):
   # argparse restricts values of N
@@ -184,19 +185,22 @@ def create_report(name, sponsor, start_date, end_date, body):
   if sponsor == "cpena":   name = "Catherine J. Pena"
   if sponsor == "javalos": name = "Jose L. Avalos"
   report  = f"\nSponsor: {name} ({sponsor})\n"
-  report += f" Period: {start_date.strftime('%b %-d, %Y')} - {end_date.strftime('%b %-d, %Y')}\n\n"
-  report += body
-  footer = """
+  report += f" Period: {start_date.strftime('%b %-d, %Y')} - {end_date.strftime('%b %-d, %Y')}\n"
+  opening = """
   You are receiving this report because you sponsor researchers on the
-  Research Computing systems. The report above shows the researchers
+  Research Computing systems. The report below shows the researchers
   that you sponsor as well as their cluster usage. Only researchers
   that ran at least one job during the reporting period appear in the
-  table(s) above. There are no financial costs for using the systems.
-
+  table(s) below. There are no financial costs for using the systems.
+  """
+  report += textwrap.dedent(opening)
+  report += "\n"
+  report += body
+  footer = """
   Definitions: A 2-hour job (wall-clock time) that allocates 4 CPU-cores
   consumes 8 CPU-hours. Similarly, a 2-hour job that allocates 4 GPUs
   consumes 8 GPU-hours. If a group is ranked 5 of 20 then it used the
-  fifth most CPU-hours or GPU-hours of the 20 groups.
+  fifth most CPU-hours (or GPU-hours) of the 20 groups.
 
   Replying to this email will open a ticket with CSES. Please reply
   with questions/comments or to unsubscribe from these reports.
@@ -239,7 +243,12 @@ if __name__ == "__main__":
 
   # filter pending jobs and clean
   df = df[pd.notnull(df.alloctres) & (df.alloctres != "")]
+
+  before = df.shape[0]
+  df = df[df.start.str.isnumeric()]  # added on 6/30/2022 for jobs 8201421 (tiger), 40265195 (della)
+  if (df.shape[0] != before): print(f"\nW: {before - df.shape[0]} rows dropped because start was not numeric\n")
   df.start = df.start.astype("int64")
+
   df.cluster   =   df.cluster.str.replace("tiger2", "tiger")
   df.partition = df.partition.str.replace("datascience", "datasci")
   df.partition = df.partition.str.replace("physics", "phys")
@@ -296,6 +305,7 @@ if __name__ == "__main__":
       cl = sp[sp.cluster == cluster]
       if not cl.empty:
         # determine where a group ranks relative to other groups per cluster
+        # TDO: decompose stellar to pu/pppl and cimes
         cpu_hours_by_sponsor = cl["cpu-hours"].sum()
         gpu_hours_by_sponsor = cl["gpu-hours"].sum()
         cpu_hours_total = dg[dg.cluster == cluster]["cpu-hours"].sum()
