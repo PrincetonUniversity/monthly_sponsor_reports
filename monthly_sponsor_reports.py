@@ -22,8 +22,8 @@ from email.mime.text import MIMEText
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = 3600
 HOURS_PER_DAY = 24
-BASEPATH = os.getcwd()
-#BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
+#BASEPATH = os.getcwd()
+BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
 
 def get_date_range(today, N):
   # argparse restricts values of N
@@ -92,7 +92,9 @@ def is_gpu_job(tres):
 
 def add_proportion_in_parenthesis(dframe, column_name, replace=False):
   if dframe.shape[0] == 1: return dframe
-  dframe["proportion"] = 100 * dframe[column_name] / dframe[column_name].sum()
+  total = dframe[column_name].sum()
+  if total == 0: return dframe
+  dframe["proportion"] = 100 * dframe[column_name] / total
   dframe["proportion"] = dframe["proportion"].apply(round)
   name = column_name if replace else f"{column_name}-cmb"
   dframe[name] = dframe.apply(lambda row: f"{round(row[column_name])} ({row['proportion']}%)", axis='columns')
@@ -293,7 +295,7 @@ if __name__ == "__main__":
   print(f"Total users:    {dg.netid.unique().size}")
   print(f"Total jobs:     {df.shape[0]}")
 
-  # remove unsubscribed sponsors
+  # remove unsubscribed sponsors and those that left the university
   unsubscribed = ["mzaletel"]
   sponsors = set(sponsors) - set(unsubscribed)
 
@@ -301,6 +303,7 @@ if __name__ == "__main__":
     name = sponsor_full_name(sponsor, verbose=True)
     sp = dg[dg.sponsor == sponsor]
     body = ""
+    if args.email: print(sponsor)
     for cluster in ("della", "stellar", "tiger", "traverse"):
       cl = sp[sp.cluster == cluster]
       if not cl.empty:
@@ -329,6 +332,5 @@ if __name__ == "__main__":
         body += "\n\n"
     report = create_report(name, sponsor, start_date, end_date, body)
     send_email(report, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(report)
-    #send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
     if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date) if args.email else print(report)
     if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
