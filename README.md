@@ -104,6 +104,21 @@ These reports run under cron on tigergpu:
 56 8 1 * * /usr/licensed/anaconda3/2021.11/bin/python -u -B /home/jdh4/bin/monthly_sponsor_reports/monthly_sponsor_reports.py --months=3 --email > /home/jdh4/bin/monthly_sponsor_reports/output.log 2>&1
 ```
 
+## 
+
+The commands below illustrates the essence of the software in this repo. To compute the CPU-seconds of all jobs on the `cimes` partition:
+
+```
+$ sacct -a -X -n -S 2022-04-01T00:00:00 -E 2022-04-30T23:59:59 -o cputimeraw --partition cimes | awk '{sum += $1} END {print sum}'
+```
+
+To compute the CPU-seconds used by user `aturing`:
+
+```
+$ sacct -u aturing -X -n -S 2022-04-01T00:00:00 -E 2022-04-30T23:59:59 -o cputimeraw | awk '{sum += $1} END {print sum}'
+```
+
+
 ## Be Aware
 
 - A sponsor will only receive a report if one of their users ran at least one job in the reporting period.  
