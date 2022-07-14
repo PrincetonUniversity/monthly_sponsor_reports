@@ -13,6 +13,7 @@ from random import random
 
 from sponsor import sponsor_full_name
 from sponsor import sponsor_per_cluster
+from sponsor import get_full_name_of_user
 from efficiency import get_stats_dict
 from efficiency import cpu_efficiency
 from efficiency import gpu_efficiency
@@ -42,6 +43,8 @@ def get_date_range(today, N):
   year, month = subtract_months(today, 1)
   _, last_day_of_month = calendar.monthrange(year, month)
   end_date = date(year, month, last_day_of_month)
+  if args.users:
+    return date(2022, 6, 15), date(2022, 7, 14)
   return start_date, end_date
 
 def send_email(s, addressee, start_date, end_date, sender="cses@princeton.edu"):
@@ -158,11 +161,7 @@ def groupby_cluster_netid_and_get_sponsor(df, user_sponsor):
     dg["cluster"] = dg["cluster-xpu"].apply(lambda x: x[0:-3])
   else:
     dg = df.groupby(by=["cluster", "netid"]).agg(d).rename(columns={"netid":"jobs"}).reset_index()
-  print(dg.columns)
-  print(user_sponsor.columns)
   dg = dg.merge(user_sponsor, on="netid", how="left")
-  print(dg.columns)
-  print(dg.head())
   dg["sponsor"] = dg.apply(lambda row: row["sponsor-dict"][row["cluster"]], axis='columns')
   dg["name"] = dg["sponsor-dict"].apply(lambda x: x["displayname"]).apply(format_user_name)
   dg = dg.sort_values(["cluster", "sponsor", "cpu-hours"], ascending=[True, True, False])
@@ -251,6 +250,59 @@ def special_requests(sponsor, cluster, cl, start_date, end_date):
     return f"\n\nPercent usage of Tromp GPU nodes is {round(100 * gpu_hours_used / gpu_hours_available, 1)}%."
   else:
     return ""
+
+def create_user_report(name, netid, start_date, end_date, body):
+  if netid == "cpena":   name = "Catherine J. Pena"
+  if netid == "javalos": name = "Jose L. Avalos"
+  if netid == "alemay":  name = "Amelie Lemay"
+
+  report  = f"\n  User: {name}\n"
+  report += f"Period: {start_date.strftime('%b %-d, %Y')} - {end_date.strftime('%b %-d, %Y')}\n"
+  report += "\n"
+  opening = (
+            'You are receiving this NEW report because you ran at least one job on the Research Computing systems '
+            'in the past month. The table below shows your cluster usage:'
+            )
+  report += "\n".join(textwrap.wrap(opening, width=80))
+  report += "\n\n"
+  report += body
+  defs = (
+         'Definitions: A 2-hour job (wall-clock time) that allocates 4 CPU-cores '
+         'consumes 8 CPU-hours. Similarly, a 2-hour job that allocates 4 GPUs '
+         'consumes 8 GPU-hours. CPU-eff is the CPU efficiency. GPU-eff is the '
+         'GPU efficiency which is equivalent to the GPU utilization (as obtained by the "nvidia-smi" command). '
+         'If your rank is 5/20 then you used the fifth most CPU-hours (or GPU-hours) of the 20 users. The Sponsor column indicates the NetID of your '
+         'cluster sponsor. If the cluster sponsor is incorrect then please notify CSES by replying to this email. '
+  )
+  report += "\n".join(textwrap.wrap(defs, width=80))
+  report += "\n"
+  report += textwrap.dedent(f"""
+            Please use the resources efficiently. You can see job efficiency data by
+            running the "jobstats" command on a given JobID, for example:
+
+              $ jobstats 1234567
+
+            For more detailed information follow the link at the bottom of the "jobstats"
+            output.
+
+            To see your job history over the last 30 days, run this command:
+
+              $ shistory -d 30
+
+            Add the following lines to your Slurm scripts to receive an email report with
+            efficiency information after each job finishes:
+
+              #SBATCH --mail-type=begin
+              #SBATCH --mail-type=end
+              #SBATCH --mail-user={netid}@princeton.edu
+  """)
+  report += "\n"
+  reply = (
+  'Replying to this email will open a ticket with CSES. Please reply '
+  'with questions, changes to your sponsorship or to unsubscribe from these reports.'
+  )
+  report += "\n".join(textwrap.wrap(reply, width=80))
+  return report
 
 def create_report(name, sponsor, start_date, end_date, body):
   if sponsor == "cpena":   name = "Catherine J. Pena"
@@ -372,10 +424,9 @@ if __name__ == "__main__":
   print(f"Total jobs:     {df.shape[0]}")
 
   if args.users:
-    #assert datetime.now().strftime("%-d") == "15", "Script will only run on 1st of the month"
+    #assert datetime.now().strftime("%-d") == "15", "Script will only run on 15th of the month"
     for user in sorted(users):
       sp = dg[dg.netid == user]
-      body = ""
       rows = pd.DataFrame()
       if args.email: print(f"User: {user}")
       for cluster in ("dellacpu", "dellagpu", "stellarcpu", "stellargpu", "tigercpu", "tigergpu", "traversecpu", "traversegpu"):
@@ -395,34 +446,26 @@ if __name__ == "__main__":
           cl["CPU-rank"] = cl["cpu-hours"].apply(lambda x: "N/A" if x == 0 else f"{cpu_hours_rank}/{total_users}")
           cl["GPU-rank"] = cl["gpu-hours"].apply(lambda x: "N/A" if x == 0 else f"{gpu_hours_rank}/{total_users}")
           # add efficiency info
-          #uc = user_eff[(user_eff.netid == user) & (user_eff["cluster-xpu"] == cluster)]
-          #if uc.shape[0] == 1:
-          #  cl["CPU-eff"] = uc["cpu-eff(%)"].iloc[0]
-          #else:
-          #  cl["CPU-eff"] = "N/A"
           cl = pd.merge(cl, user_eff, how="left", on=["netid", "cluster-xpu"])
           cl = cl.fillna("--")
-          #cl["CPU-eff"] = uc["cpu-eff(%)"].iloc[0]
-          #cl["GPU-eff"] = uc["gpu-eff(%)"].iloc[0]
-
-          #body += add_heading(cl[cols].rename(columns=renamings).to_string(index=False, justify="center"), cluster)
           cols = ["cluster", "partition", "cpu-hours", "CPU-rank", "CPU-eff", "gpu-hours", "GPU-rank", "GPU-eff", "jobs", "account", "sponsor"]
           rows = rows.append(cl[cols].rename(columns=renamings))
-          #body += f"\n\nYou used {cpu_hours_by_item} CPU-hours or {cpu_hours_pct}% of the {cpu_hours_total} total CPU-hours"
-          #body += f"\non {cluster[0].upper() + cluster[1:]}. You are ranked {cpu_hours_rank} of {total_users} by CPU-hours used."
-          #if gpu_hours_by_item != 0:
-          #  body +=  " Similarly,"
-          #  body += f"\nyou used {gpu_hours_by_item} GPU-hours or {gpu_hours_pct}% of the {gpu_hours_total} total GPU-hours"
-          #  body += f"\nyielding a ranking of {gpu_hours_rank} of {total_users} by GPU-hours used."
-      body += rows.to_string(index=False, justify="center")
+      rows["GPU-hours"] = rows.apply(lambda row: row["GPU-hours"] if "gpu" in row["Partition"] else "N/A", axis="columns")
+      rows["GPU-eff"]   = rows.apply(lambda row: row["GPU-eff"]   if "gpu" in row["Partition"] else "N/A", axis="columns")
+      if (rows[rows.Partition.str.contains("gpu")].shape[0] == 0):
+        rows.drop(columns=["GPU-hours", "GPU-rank", "GPU-eff"], inplace=True)
+      body = "\n".join([2 * " " + row for row in rows.to_string(index=False, justify="center").split("\n")])
       body += "\n\n"
-      report = create_report(name, sponsor, start_date, end_date, body)
+      report = create_user_report(get_full_name_of_user(user), user, start_date, end_date, body)
       print(report)
       #send_email(report, f"{user}@princeton.edu", start_date, end_date) if args.email else print(report)
+      if user in ("ab50", "aagles", "ab8483", "dpanici", "dmr4", "kw5996", "yanliang"):
+        send_email(report, f"halverson@princeton.edu", start_date, end_date)
+        #send_email(report, f"bill@princeton.edu", start_date, end_date)
       #if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
   else:
     # sponsors
-    assert datetime.now().strftime("%-d") == "15", "Script will only run on 1st of the month"
+    assert datetime.now().strftime("%-d") == "1", "Script will only run on 1st of the month"
     # remove unsubscribed sponsors and those that left the university
     unsubscribed = ["mzaletel"]
     sponsors = set(sponsors) - set(unsubscribed)
