@@ -110,9 +110,28 @@ The code depends on the partitions across the clusters:
 
 ```
 $ sacct -S 2022-04-01 -L -a -X -n -o partition | sort | uniq
+all
+callan
+cimes
+cpu
+cpu,physics
+cryoem
+datascience
+donia
+ext
+gpu
+gpu-ee
+malik
+motion
+orfeus
+physics
+physics,cpu
+pppl
+pu
+serial
 ```
 
-It is a good idea to make the partitions used in the code are up to date.
+It is a good idea to make sure that the partitions used in the code are up to date.
 
 ## One-liners
 
