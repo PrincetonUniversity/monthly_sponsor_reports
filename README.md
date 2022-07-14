@@ -104,6 +104,16 @@ These reports run under cron on tigergpu:
 56 8 1 * * /usr/licensed/anaconda3/2021.11/bin/python -u -B /home/jdh4/bin/monthly_sponsor_reports/monthly_sponsor_reports.py --months=3 --email > /home/jdh4/bin/monthly_sponsor_reports/output.log 2>&1
 ```
 
+## Partitions
+
+The code depends on the partitions across the clusters:
+
+```
+$ sacct -S 2022-04-01 -L -a -X -n -o partition | sort | uniq
+```
+
+It is a good idea to make the partitions used in the code are up to date.
+
 ## One-liners
 
 The commands below illustrates the essence of the software in this repo. To compute the CPU-seconds of all jobs on the `cimes` partition in April 2022:
