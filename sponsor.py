@@ -72,3 +72,14 @@ def sponsor_full_name(netid, verbose=True):
   
   if not displayname and verbose: print(f"W: Name not found in CSES LDAP for sponsor {netid}.")
   return displayname
+
+def get_full_name_of_user(netid):
+  cmd = f"ldapsearch -x uid={netid} displayname"
+  output = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True, timeout=5, text=True, check=True)
+  lines = output.stdout.split('\n')
+  for line in lines:
+    if line.startswith("displayname:"):
+      full_name = line.replace("displayname:", "").strip()
+      if full_name.replace(".", "").replace(",", "").replace(" ", "").replace("-", "").isalpha():
+        return f"{full_name} ({netid})"
+  return netid
