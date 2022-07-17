@@ -109,26 +109,34 @@ These reports run under cron on tigergpu:
 The code depends on the partitions across the clusters:
 
 ```
-$ sacct -S 2022-04-01 -L -a -X -n -o partition | sort | uniq
-all
-callan
-cimes
-cpu
-cpu,physics
-cryoem
-datascience
-donia
-ext
-gpu
-gpu-ee
-malik
-motion
-orfeus
-physics
-physics,cpu
-pppl
-pu
-serial
+$ sacct -S 2022-04-01 -L -a -X -n -o cluster,partition%25 | sort | uniq
+     della                    callan 
+     della                       cpu 
+     della               cpu,physics 
+     della                    cryoem 
+     della               datascience 
+     della                     donia 
+     della                       gpu 
+     della                    gpu-ee 
+     della                     malik 
+     della                    orfeus 
+     della                   physics 
+     della               physics,cpu 
+   perseus                       all 
+   stellar                       all 
+   stellar                     cimes 
+   stellar                       gpu 
+   stellar                      pppl 
+   stellar                        pu 
+   stellar                    serial 
+    tiger2                       cpu 
+    tiger2                    cryoem 
+    tiger2                       ext 
+    tiger2                       gpu 
+    tiger2                    motion 
+    tiger2                    serial 
+  traverse                       all 
+     tukey                       all 
 ```
 
 It is a good idea to make sure that the partitions used in the code are up to date.
