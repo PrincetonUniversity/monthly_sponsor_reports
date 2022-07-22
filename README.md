@@ -95,6 +95,8 @@ $ python monthly_sponsor_reports.py --months=3 --email
 
 A 2-hour job (wall-clock time) that allocates 4 CPU-cores consumes 8 CPU-hours. Similarly, a 2-hour job that allocates 4 GPUs consumes 8 GPU-hours. If a group is ranked 5 of 20 then it used the fifth most CPU-hours or GPU-hours of the 20 groups.
 
+`CPU-eff` is the CPU efficiency. It is computed as the ratio of the sums of the CPU time used by all of the CPU-cores and the CPU time allocated, which is the product of the elapsed time of the job and the number of CPU-cores, over all jobs.
+
 ## Cron
 
 These reports run under cron on tigergpu:
