@@ -1,4 +1,5 @@
 import argparse
+import sys
 import os
 import time
 import math
@@ -24,8 +25,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-GPU_CLUSTER_PARTITIONS = ["della_cryoem(gpu)", "della_gpu", "della_gpu-ee", "stellar_gpu",
-                          "tiger_cryoem(gpu)", "tiger_gpu", "tiger_motion", "traverse_all(gpu)"]
+GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)", "della__gpu", "della__gpu-ee", "stellar__gpu",
+                          "tiger__cryoem(gpu)", "tiger__gpu", "tiger__motion", "traverse__all(gpu)"]
 
 # conversion factors
 SECONDS_PER_MINUTE = 60
@@ -34,7 +35,7 @@ HOURS_PER_DAY = 24
 #BASEPATH = os.getcwd()
 BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
 
-def get_date_range(today, N):
+def get_date_range(today, N, report_type="sponsors"):
   # argparse restricts values of N
   def subtract_months(mydate, M):
     year, month = mydate.year, mydate.month
@@ -43,15 +44,21 @@ def get_date_range(today, N):
       year  -= 1
       month += 12
     return year, month
-  year, month = subtract_months(today, N)
-  start_date = date(year, month, 1)
-  year, month = subtract_months(today, 1)
-  _, last_day_of_month = calendar.monthrange(year, month)
-  end_date = date(year, month, last_day_of_month)
-  if args.users:
+  if report_type == "sponsors":
     return date(2022, 7, 19), date(2022, 7, 24)
-  return date(2022, 7, 19), date(2022, 7, 26)
-  #return start_date, end_date
+    year, month = subtract_months(today, N)
+    start_date = date(year, month, 1)
+    year, month = subtract_months(today, 1)
+    _, last_day_of_month = calendar.monthrange(year, month)
+    end_date = date(year, month, last_day_of_month)
+  elif report_type == "users":
+    return date(2022, 7, 19), date(2022, 7, 24)
+    year, month = subtract_months(today, N)
+    start_date = date(year, month, 15)  
+    end_date = date(today.year, today.month, 14)
+  else:
+    sys.exit("Error: get_date_range(): report_type does not match choices.")
+  return start_date, end_date
 
 def send_email(s, addressee, start_date, end_date, sender="cses@princeton.edu"):
   msg = MIMEMultipart('alternative')
@@ -147,7 +154,7 @@ def add_new_and_derived_fields(df):
   df["admincomment"] = df["admincomment"].apply(get_stats_dict)
   # clean partitions for traverse and cryoem (della and tiger)
   df.partition = df.apply(lambda row: delineate_partitions(row["cluster"], row["gpu-job"], row["partition"]), axis="columns")
-  df["cluster-partition"] = df.apply(lambda row: f"{row['cluster']}_{row['partition']}", axis="columns")
+  df["cluster-partition"] = df.apply(lambda row: f"{row['cluster']}__{row['partition']}", axis="columns")
   return df
 
 def uniq_series(series):
@@ -169,9 +176,9 @@ def format_user_name(s):
     return shorten(f"{names[0]} {names[-1]}")
 
 def groupby_cluster_partition_netid_and_get_sponsor(df, user_sponsor):
-  d = {"cpu-hours":np.sum, "gpu-hours":np.sum, "netid":np.size, "partition":uniq_series, "account":uniq_series}
+  d = {"cpu-hours":np.sum, "gpu-hours":np.sum, "netid":np.size, "partition":min, "account":uniq_series}
   dg = df.groupby(by=["cluster-partition", "netid"]).agg(d).rename(columns={"netid":"jobs"}).reset_index()
-  dg["cluster"] = dg["cluster-partition"].apply(lambda x: x.split("_")[0])
+  dg["cluster"] = dg["cluster-partition"].apply(lambda x: x.split("__")[0])
   dg = dg.merge(user_sponsor, on="netid", how="left")
   dg["sponsor"] = dg.apply(lambda row: row["sponsor-dict"][row["cluster"]], axis='columns')
   dg["name"] = dg["sponsor-dict"].apply(lambda x: x["displayname"]).apply(format_user_name)
@@ -180,7 +187,7 @@ def groupby_cluster_partition_netid_and_get_sponsor(df, user_sponsor):
   dg["gpu-hours"] = dg["gpu-hours"].apply(round).astype("int64")
   return dg
 
-def compute_cpu_and_gpu_efficiencies(df, parts):
+def compute_cpu_and_gpu_efficiencies(df, clusparts):
   # Here we create a new dataframe containing the efficiencies.
   # This is good to do in isolation since we may need to filter out some jobs and
   # a lot can go wrong in general when computing these quantities.
@@ -189,26 +196,26 @@ def compute_cpu_and_gpu_efficiencies(df, parts):
   # efficiencies.
 
   eff = pd.DataFrame()
-  for part in parts:
-    ce = df[(df["cluster-partition"] == part) & \
+  for cluspart in clusparts:
+    ce = df[(df["cluster-partition"] == cluspart) & \
             (df["elapsedraw"] >= 0.1 * SECONDS_PER_HOUR) & \
             (df.admincomment != {})].copy()
     if ce.empty: continue  # prevents next line from failing
     ce[f"cpu-tuples"] = ce.apply(lambda row: cpu_efficiency(row["admincomment"], row["elapsedraw"], row["jobid"], row["cluster"]), axis="columns")
     ce[f"cpu-seconds-used"]  = ce[f"cpu-tuples"].apply(lambda x: x[0])
     ce[f"cpu-seconds-total"] = ce[f"cpu-tuples"].apply(lambda x: x[1])
-    if part in GPU_CLUSTER_PARTITIONS:
+    if cluspart in GPU_CLUSTER_PARTITIONS:
       ce[f"gpu-tuples"] = ce.apply(lambda row: gpu_efficiency(row["admincomment"], row["elapsedraw"], row["jobid"], row["cluster"]), axis="columns")
       ce[f"gpu-seconds-used"]  = ce[f"gpu-tuples"].apply(lambda x: x[0])
       ce[f"gpu-seconds-total"] = ce[f"gpu-tuples"].apply(lambda x: x[1])
     before = ce.shape[0]
     ce = ce[ce[f"cpu-seconds-used"] <= ce[f"cpu-seconds-total"]]  # dropping bad data
-    if (before - ce.shape[0] > 0): print(f"W: Dropped {before - ce.shape[0]} rows of {before} on {part} while computing CPU efficiencies")
-    if part in GPU_CLUSTER_PARTITIONS:
+    if (before - ce.shape[0] > 0): print(f"W: Dropped {before - ce.shape[0]} rows of {before} on {cluspart} while computing CPU efficiencies")
+    if cluspart in GPU_CLUSTER_PARTITIONS:
       before = ce.shape[0]
       ce = ce[ce[f"gpu-seconds-used"] <= ce[f"gpu-seconds-total"]]
-      if (before - ce.shape[0] > 0): print(f"W: Dropped {before - ce.shape[0]} rows of {before} on {part} while computing GPU efficiencies")
-    if part not in GPU_CLUSTER_PARTITIONS:
+      if (before - ce.shape[0] > 0): print(f"W: Dropped {before - ce.shape[0]} rows of {before} on {cluspart} while computing GPU efficiencies")
+    if cluspart not in GPU_CLUSTER_PARTITIONS:
       d = {"netid":np.size, "cpu-seconds-used":np.sum, "cpu-seconds-total":np.sum}
       ce = ce.groupby("netid").agg(d).rename(columns={"netid":"jobs"}).reset_index(drop=False)
       ce["CPU-eff"] = ce.apply(lambda row: f'{round(100.0 * row["cpu-seconds-used"] / row["cpu-seconds-total"])}%' if row["cpu-seconds-total"] != 0 else "--", axis="columns")
@@ -218,7 +225,7 @@ def compute_cpu_and_gpu_efficiencies(df, parts):
       ce = ce.groupby("netid").agg(d).rename(columns={"netid":"jobs"}).reset_index(drop=False)
       ce["CPU-eff"] = ce.apply(lambda row: f'{round(100.0 * row["cpu-seconds-used"] / row["cpu-seconds-total"])}%' if row["cpu-seconds-total"] != 0 else "--", axis="columns")
       ce["GPU-eff"] = ce.apply(lambda row: f'{round(100.0 * row["gpu-seconds-used"] / row["gpu-seconds-total"])}%' if row["gpu-seconds-total"] != 0 else "--", axis="columns")
-    ce["cluster-partition"] = part
+    ce["cluster-partition"] = cluspart
     ce = ce[["netid", "CPU-eff", "GPU-eff", "cluster-partition"]]
     eff = pd.concat([eff, ce])
   return eff
@@ -367,17 +374,17 @@ if __name__ == "__main__":
   #                    help='Start date with format YYYY-MM-DD')
   #parser.add_argument('--end', type=str, default="", metavar='E',
   #                    help='End date with format YYYY-MM-DD')
+  parser.add_argument('--report-type', required=True, type=str, choices=["sponsors", "users"],
+                      help='Specify the report type: "sponsors" or "users"')
   parser.add_argument('--months', type=int, default=3, metavar='N', choices=range(1, 8),
                       help='Reporting period covers N previous months from now')
-  parser.add_argument('--users', action='store_true', default=False,
-                      help='Create reports for users instead of sponsors')
   parser.add_argument('--email', action='store_true', default=False,
                       help='Send reports via email')
 
   args = parser.parse_args()
   #start_date = datetime.strptime(args.start, '%Y-%m-%d')
   #end_date   = datetime.strptime(args.end,   '%Y-%m-%d')
-  start_date, end_date = get_date_range(date.today(), args.months)
+  start_date, end_date = get_date_range(date.today(), args.months, report_type=args.report_type)
   print(f"\nReporting period: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
 
   # pandas display settings
@@ -417,43 +424,24 @@ if __name__ == "__main__":
   print("== Raw pairs ==")
   print(df[["cluster", "partition"]].drop_duplicates().sort_values(["cluster", "partition"]).to_string(index=False))
   print("\n")
-  print("Developer must specify GPU partitions")
-  parts = np.sort(df["cluster-partition"].unique())
-  for part in parts:
-    stars = "***GPU***" if part in GPU_CLUSTER_PARTITIONS else 9 * " "
-    print(f"{stars} {part}")
-
-
-
-
-  # compute cpu and gpu efficiencies when possible
-  #user_eff = compute_cpu_and_gpu_efficiencies(df, parts)
-  #print(user_eff)
-  #df = df[(df.admincomment != {}) & (df.cluster == "della") & (df.partition == "cpu") & (df["elapsedraw"] >= 0.1 * SECONDS_PER_HOUR)]
-  #df = df[(df.admincomment != {}) & (df["elapsedraw"] >= 0.1 * SECONDS_PER_HOUR)]
-  #df = df[(df.admincomment != {})]
-  #df["memory-tuple"] = df.apply(lambda row: cpu_memory_usage(row["admincomment"], row["jobid"], row["cluster"]), axis="columns")
-  #import sys; sys.exit()
-
-
-
+  print("Be sure to explicitly specify the GPU partitions in GPU_CLUSTER_PARTITIONS.")
+  print("GPU partitions are denoted by ***GPU*** below:")
+  clusparts = np.sort(df["cluster-partition"].unique())
+  for cluspart in clusparts:
+    stars = "***GPU***" if cluspart in GPU_CLUSTER_PARTITIONS else 9 * " "
+    print(f"{stars} {cluspart}")
 
   # get sponsor info for each unique netid (this minimizes ldap calls)
   user_sponsor = df[["netid"]].drop_duplicates().sort_values("netid").copy()
   if not args.email: print("Getting sponsor for each user (which may require several seconds) ... ", end="\n", flush=True)
-  user_sponsor["sponsor-dict"] = user_sponsor.netid.apply(lambda n: sponsor_per_cluster(n, verbose=True))
-
-  # overall (partitions collapsed)
-  #ov = groupby_cluster_netid_and_get_sponsor(df, user_sponsor, overall=True)
-  #_ = check_for_nulls(ov)
+  user_sponsor["sponsor-dict"] = user_sponsor.netid.apply(lambda netid: sponsor_per_cluster(netid, verbose=True))
 
   # perform a two-column groupby (cluster-partition and netid) and then join users to their sponsors
   dg = groupby_cluster_partition_netid_and_get_sponsor(df, user_sponsor)
   _ = check_for_nulls(dg)
 
   # compute cpu and gpu efficiencies when possible
-  user_eff = compute_cpu_and_gpu_efficiencies(df, parts)
-  print(user_eff)
+  user_eff = compute_cpu_and_gpu_efficiencies(df, clusparts)
 
   dg = pd.merge(dg, user_eff, how="left", on=["cluster-partition", "netid"])
   dg = dg.fillna("--")
@@ -481,29 +469,30 @@ if __name__ == "__main__":
   #import sys; sys.exit()
 
   # create reports (each sponsor is guaranteed to have at least one user by construction above)
-  cols = ["netid", "name", "cpu-hours", "gpu-hours", "jobs", "account", "partition"]
+  cols1 = ["cluster", "partition", "cluster-partition", "cpu-hours", "CPU-rank", "CPU-eff", \
+           "gpu-hours", "GPU-rank", "GPU-eff", "jobs", "account", "sponsor"]
+  cols2 = ["netid", "name", "cpu-hours", "gpu-hours", "jobs", "account", "partition"]
+  cols3 = ["cluster", "netid", "partition", "cpu-hours", "CPU-rank", "CPU-eff", "gpu-hours", "GPU-rank", "GPU-eff", "jobs"]
   renamings = {"netid":"NetID", "name":"Name", "cpu-hours":"CPU-hours", "gpu-hours":"GPU-hours", \
                "jobs":"Jobs", "account":"Account", "partition":"Partition", "cluster":"Cluster", \
                "sponsor":"Sponsor"}
+  # next two lines throw away null sponsors and null users
   sponsors = dg[pd.notnull(dg.sponsor)].sponsor.sort_values().unique()
   users    = dg[pd.notnull(dg.netid)].netid.sort_values().unique()
   print(f"Total sponsors: {sponsors.size}")
   print(f"Total users:    {users.size}")
   print(f"Total jobs:     {df.shape[0]}")
 
-  if args.users:
+  if args.report_type == "users":
     #assert datetime.now().strftime("%-d") == "15", "Script will only run on 15th of the month"
     for user in sorted(users):
       sp = dg[dg.netid == user]
       rows = pd.DataFrame()
       if args.email: print(f"User: {user}")
-      for part in parts:
-        cl = sp[sp["cluster-partition"] == part].copy()
+      for cluspart in clusparts:
+        cl = sp[sp["cluster-partition"] == cluspart].copy()
         if not cl.empty:
-          #sponsor = cl.sponsor.iloc[0]
-          #name = sponsor_full_name(sponsor, verbose=True)
-          cols = ["cluster", "partition", "cluster-partition", "cpu-hours", "CPU-rank", "CPU-eff", "gpu-hours", "GPU-rank", "GPU-eff", "jobs", "account", "sponsor"]
-          rows = rows.append(cl[cols].rename(columns=renamings))
+          rows = rows.append(cl[cols1].rename(columns=renamings))
       rows["GPU-hours"] = rows.apply(lambda row: row["GPU-hours"] if row["cluster-partition"] in GPU_CLUSTER_PARTITIONS else "N/A", axis="columns")
       rows["GPU-eff"]   = rows.apply(lambda row: row["GPU-eff"]   if row["cluster-partition"] in GPU_CLUSTER_PARTITIONS else "N/A", axis="columns")
       if (rows[rows["cluster-partition"].isin(GPU_CLUSTER_PARTITIONS)].shape[0] == 0):
@@ -519,8 +508,7 @@ if __name__ == "__main__":
       #  send_email(report, f"halverson@princeton.edu", start_date, end_date)
       #if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date)
       #if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
-  else:
-    # sponsors
+  elif args.report_type == "sponsors":
     #assert datetime.now().strftime("%-d") == "1", "Script will only run on 1st of the month"
     ov = collapse_by_sponsor(dg)
 
@@ -551,7 +539,7 @@ if __name__ == "__main__":
 
           cl = add_proportion_in_parenthesis(cl.copy(), "cpu-hours", replace=True)
           body += "\n"
-          body += add_heading(cl[cols].rename(columns=renamings).to_string(index=False, justify="center"), cluster)
+          body += add_heading(cl[cols2].rename(columns=renamings).to_string(index=False, justify="center"), cluster)
           body += special_requests(sponsor, cluster, cl, start_date, end_date)
           body += f"\n\nYour group used {cpu_hours_by_sponsor} CPU-hours or {cpu_hours_pct}% of the {cpu_hours_total} total CPU-hours"
           body += f"\non {cluster[0].upper() + cluster[1:]}. Your group is ranked {cpu_hours_rank} of {total_sponsors} by CPU-hours used."
@@ -560,23 +548,30 @@ if __name__ == "__main__":
             body += f"\nyour group used {gpu_hours_by_sponsor} GPU-hours or {gpu_hours_pct}% of the {gpu_hours_total} total GPU-hours"
             body += f"\nyielding a ranking of {gpu_hours_rank} of {total_sponsors} by GPU-hours used."
           body += "\n\n"
+
+      # details dataframe
+      details = dg[dg.sponsor == sponsor][cols3].rename(columns=renamings).sort_values(["Cluster", "NetID", "Partition"])
+      details["Cluster"] = details["Cluster"].apply(lambda x: f"{x[0].upper()}{x[1:]}")
+      df_str = details.to_string(index=False, justify="center")
+      max_width = max(map(len, df_str.split("\n")))
+      heading = "Detailed Breakdown"
+      padding = " " * max(1, math.ceil((max_width - len(heading)) / 2))
+      body += "\n\n"
+      body += padding + heading + padding + "\n"
+      body += "-" * max_width + "\n"
+      for i, line in enumerate(df_str.split("\n")):
+        body += line + "\n"
+        if i == 0: body += "-" * max_width + "\n"
+      body += "\n"
+
+      # create report
       name = sponsor_full_name(sponsor, verbose=True)
       report = create_report(name, sponsor, start_date, end_date, body)
       print(report)
       print("\n")
 
-      cols2 = ["cluster", "netid", "partition", "cpu-hours", "CPU-rank", "CPU-eff", "gpu-hours", "GPU-rank", "GPU-eff", "jobs"]
-      renamings = {"netid":"NetID", "cpu-hours":"CPU-hours", "gpu-hours":"GPU-hours", \
-                   "jobs":"Jobs", "account":"Account", "partition":"Partition", "cluster":"Cluster", \
-                   "sponsor":"Sponsor"}
-      df_str = dg[dg.sponsor == sponsor][cols2].rename(columns=renamings).sort_values(["Cluster", "NetID", "Partition"]).to_string(index=False, justify="center")
-      max_width = max(map(len, df_str.split("\n")))
-      print("        Breakdown by Partition with CPU and GPU Efficiencies")
-      print("-" * max_width)
-      for i, line in enumerate(df_str.split("\n")):
-        print(line)
-        if i == 0: print("-" * max_width)
-
       #send_email(report, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(report)
       #if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date) if args.email else print(report)
       #if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
+  else:
+    sys.exit("Error: report_type does not match choices.")
