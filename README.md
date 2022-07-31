@@ -1,6 +1,6 @@
-# Monthly Sponsor Reports
+# Monthly Sponsor and User Reports
 
-The software in this repo generates monthly sponsor reports for the Research Computing clusters. Below is an example report:
+The software in this repo generates monthly sponsor and user reports for the Research Computing clusters. Below is an example sponsor report:
 
 ```
 Sponsor: Garegin Andrea (gandrea)
@@ -68,10 +68,12 @@ $ module load anaconda3/2021.11
 $ python -m unittest tests/test_monthly_sponsor_reports.py -v
 ```
 
+### Sponsor Reports
+
 If all of the tests pass then do a dry run (which takes a few minutes):
 
 ```bash
-$ python monthly_sponsor_reports.py --months=3
+$ python monthly_sponsor_reports.py --report-type=sponsors --months=3
 ```
 
 It is normal to see warnings like the following during the dry run:
@@ -88,7 +90,21 @@ W: User mlakshmi has multiple primary sponsors: gandrea,cbus. Using gandrea.
 The output will be sent to stdout instead of email for the dry run. If the output looks good then run once more with emails enabled:
 
 ```bash
-$ python monthly_sponsor_reports.py --months=3 --email
+$ python monthly_sponsor_reports.py --report-type=sponsors --months=3 --email
+```
+
+### User Reports
+
+For user reports, one uses:
+
+```bash
+$ python monthly_sponsor_reports.py --report-type=users --months=1
+```
+
+And then:
+
+```
+$ python monthly_sponsor_reports.py --report-type=users --months=1 --email
 ```
 
 ## Definitions
@@ -103,7 +119,7 @@ These reports run under cron on tigergpu:
 
 ```
 [jdh4@tigergpu ~]$ crontab -l
-56 8 1 * * /usr/licensed/anaconda3/2021.11/bin/python -u -B /home/jdh4/bin/monthly_sponsor_reports/monthly_sponsor_reports.py --months=3 --email > /home/jdh4/bin/monthly_sponsor_reports/output.log 2>&1
+55 8 1 * * /usr/licensed/anaconda3/2021.11/bin/python -uB /home/jdh4/bin/monthly_sponsor_reports/monthly_sponsor_reports.py --report-type=sponsors --months=3 --email > /home/jdh4/bin/monthly_sponsor_reports/output.log 2>&1
 ```
 
 ## Partitions
