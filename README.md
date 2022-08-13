@@ -65,7 +65,7 @@ Run the unit tests:
 
 ```bash
 $ module load anaconda3/2021.11
-$ python -m unittest tests/test_monthly_sponsor_reports.py -v
+$ python -uB -m unittest tests/test_monthly_sponsor_reports.py -v
 ```
 
 ### Sponsor Reports
