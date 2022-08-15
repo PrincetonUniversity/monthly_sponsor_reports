@@ -40,7 +40,8 @@ HOURS_PER_DAY = 24
 BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
 
 def get_date_range(today, N, report_type="sponsors"):
-  #return date(2022, 5, 1), date(2022, 7, 31)
+  #return date(2022, 7, 15), date(2022, 8, 14)
+  #return date(2022, 6, 1), date(2022, 8, 31)
   # argparse restricts values of N
   def subtract_months(mydate, M):
     year, month = mydate.year, mydate.month
@@ -291,6 +292,7 @@ def create_user_report(name, netid, start_date, end_date, body):
   if netid == "cpena":   name = "Catherine J. Pena"
   if netid == "javalos": name = "Jose L. Avalos"
   if netid == "alemay":  name = "Amelie Lemay"
+  if netid == "alvaros": name = "Alvaro Luna"
 
   report  = f"\n  User: {name}\n"
   report += f"Period: {start_date.strftime('%b %-d, %Y')} - {end_date.strftime('%b %-d, %Y')}\n"
@@ -454,7 +456,6 @@ if __name__ == "__main__":
 
   dg = pd.merge(dg, user_eff, how="left", on=["cluster-partition", "netid"])
   dg[["CPU-eff", "GPU-eff"]] = dg[["CPU-eff", "GPU-eff"]].fillna("--")
-  print(dg)
   dg = add_cpu_and_gpu_rankings(dg, dg.copy())
 
   # sanity checks and safeguards
@@ -495,7 +496,7 @@ if __name__ == "__main__":
   if args.report_type == "users":
     assert datetime.now().strftime("%-d") == "15", "Script will only run on 15th of the month"
     # remove unsubscribed users and those that left the university
-    unsubscribed_users = ["aturing", "bfaber", "ceerc"]
+    unsubscribed_users = ["bfaber", "ceerc", "sting", "ib4025", "mchitoto"]
     users = set(users) - set(unsubscribed_users)
     for user in sorted(users):
       sp = dg[dg.netid == user]
@@ -514,12 +515,8 @@ if __name__ == "__main__":
       body += "\n\n"
       report = create_user_report(get_full_name_of_user(user), user, start_date, end_date, body)
       print(report)
-      #send_email(report, f"{user}@princeton.edu", start_date, end_date)
-      #send_email(report, f"{user}@princeton.edu", start_date, end_date) if args.email else print(report)
-      #if user in ("ab50", "aagles", "ab8483", "dpanici", "dmr4", "kw5996", "yanliang"):
-      #  send_email(report, f"halverson@princeton.edu", start_date, end_date)
-      #if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date)
-      #if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
+      if args.email: send_email(report, f"{user}@princeton.edu", start_date, end_date)
+      if args.email and random() < 0.02: send_email(report, "halverson@princeton.edu", start_date, end_date)
   elif args.report_type == "sponsors":
     assert datetime.now().strftime("%-d") == "1", "Script will only run on 1st of the month"
     ov = collapse_by_sponsor(dg)
@@ -586,9 +583,10 @@ if __name__ == "__main__":
       report = create_report(name, sponsor, start_date, end_date, body)
       print(report)
 
-      send_email(report, f"{sponsor}@princeton.edu", start_date, end_date) if args.email else print(report)
-      if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date) if args.email else print(report)
-      if sponsor == "macohen": send_email(report, "pbisal@pppl.gov"  , start_date, end_date) if args.email else print(report)
-      if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date) if args.email else print(report)
+      if args.email:
+        send_email(report, f"{sponsor}@princeton.edu", start_date, end_date)
+        if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date)
+        if sponsor == "macohen": send_email(report, "pbisal@pppl.gov"  , start_date, end_date)
+        if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date)
   else:
     sys.exit("Error: report_type does not match choices.")
