@@ -40,7 +40,7 @@ HOURS_PER_DAY = 24
 BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
 
 def get_date_range(today, N, report_type="sponsors"):
-  #return date(2022, 7, 15), date(2022, 8, 14)
+  #return date(2022, 8, 15), date(2022, 9, 14)
   #return date(2022, 6, 1), date(2022, 8, 31)
   # argparse restricts values of N
   def subtract_months(mydate, M):
@@ -334,11 +334,22 @@ def create_user_report(name, netid, start_date, end_date, body):
               #SBATCH --mail-type=end
               #SBATCH --mail-user={netid}@princeton.edu
   """)
+  report += textwrap.dedent(f"""
+            Are you running a parallel CPU code? Want to improve your CPU efficiency and
+            get your work done faster? Consider enrolling in this PICSciE/RC workshop:
+
+              Optimization Training with Intel Developer Tools
+              Thursday, September 29 at 2:00–5:00 PM (Zoom only)
+
+            Register for PICSciE/RC workshops here:
+
+              https://researchcomputing.princeton.edu/workshops
+  """)
   report += "\n"
   reply = (
   'Replying to this email will open a ticket with CSES. Please reply '
   'with questions, changes to your sponsorship or to unsubscribe from these reports. '
-  'The next report will be sent on September 15.'
+  'The next report will be sent on October 15.'
   )
   report += "\n".join(textwrap.wrap(reply, width=80))
   return report
