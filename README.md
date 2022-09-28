@@ -6,6 +6,12 @@ The software in this repo generates monthly sponsor and user reports for the Res
 Sponsor: Garegin Andrea (gandrea)
  Period: Nov 1, 2021 - Jan 31, 2022
 
+You are receiving this report because you sponsor researchers on the
+Research Computing systems. The report below shows the researchers
+that you sponsor as well as their cluster usage. Only researchers
+that ran at least one job during the reporting period appear in the
+tables below. There are no financial costs for using the systems.
+
 
                                    Della                                   
 ----------------------------------------------------------------------------
@@ -34,11 +40,14 @@ your group used 3250 GPU-hours or 0.6% of the 554101 total GPU-hours
 yielding a ranking of 45 of 101 by GPU-hours used.
 
 
-You are receiving this report because you sponsor researchers on the
-Research Computing systems. The report above shows the researchers
-that you sponsor as well as their cluster usage. Only researchers
-that ran at least one job during the reporting period appear in the
-table(s) above. There is no financial cost for using the systems.
+                                  Detailed Breakdown
+--------------------------------------------------------------------------------------
+Cluster  NetID  Partition  CPU-hours CPU-rank CPU-eff GPU-hours GPU-rank GPU-eff  Jobs
+--------------------------------------------------------------------------------------
+ Della  rgozde    serial     11688      6/79     95%      N/A       N/A     N/A     41
+ Tiger  jiryna  all(cpu)         1     17/22      --      N/A       N/A     N/A      9
+ Tiger  jiryna  all(gpu)       498     26/41      9%       40     29/41     17%    366
+
 
 Definitions: A 2-hour job (wall-clock time) that allocates 4 CPU-cores
 consumes 8 CPU-hours. Similarly, a 2-hour job that allocates 4 GPUs
