@@ -116,6 +116,16 @@ And then:
 $ python monthly_sponsor_reports.py --report-type=users --months=1 --email
 ```
 
+## Dry Run
+
+- hard code the date range at the top  
+
+- comment out the assert statement which checks for 1st or 15th of month  
+
+- run it  
+
+- then remove brakefile, uncomment assert and comment date range
+
 ## Definitions
 
 A 2-hour job (wall-clock time) that allocates 4 CPU-cores consumes 8 CPU-hours. Similarly, a 2-hour job that allocates 4 GPUs consumes 8 GPU-hours. If a group is ranked 5 of 20 then it used the fifth most CPU-hours or GPU-hours of the 20 groups.
