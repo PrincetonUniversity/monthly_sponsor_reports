@@ -153,7 +153,9 @@ $ sacct -S 2022-04-01 -L -a -X -n -o cluster,partition%25 | sort | uniq
      della                     donia 
      della                       gpu 
      della                    gpu-ee 
+     della                   gputest 
      della                     malik 
+     della                    motion 
      della                    orfeus 
      della                   physics 
      della               physics,cpu 
