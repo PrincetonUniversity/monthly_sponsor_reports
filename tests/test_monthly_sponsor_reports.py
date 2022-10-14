@@ -49,7 +49,7 @@ class TestSponsor(unittest.TestCase):
     d = {"della":"curt", "stellar":"curt", "tiger":"curt", "traverse":"curt", "displayname":"Jonathan D. Halverson"}
     assert sponsor_per_cluster(netid="jdh4") == d
 
-    d = {"della":"curt", "stellar":"curt", "tiger":"wtang", "traverse":"curt", "displayname":"Garrett Wright"}
+    d = {"della":"curt", "stellar":"curt", "tiger":"curt", "traverse":"curt", "displayname":"Garrett Wright"}
     assert sponsor_per_cluster(netid="gbwright") == d
 
     d = {"della":None, "stellar":None, "tiger":None, "traverse":None, "displayname":None}
@@ -110,18 +110,18 @@ class TestMonthlySponsorReports(unittest.TestCase):
     pd.testing.assert_frame_equal(actual, expected)
 
   def test_rankings(self):
-    jobs = [["della__cpu", "jdh8",   100,  700],
-            ["della__cpu", "jdh6",   200,  500],
-            ["della__cpu", "jdh5",   400,  200],
-            ["della__cpu", "jdh7",     0,  100],
-            ["della__cpu", "jdh4", 16000,  900]]
+    jobs = [["della__gpu", "jdh8",   100,  700],
+            ["della__gpu", "jdh6",   200,  500],
+            ["della__gpu", "jdh5",   400,  200],
+            ["della__gpu", "jdh7",     0,  100],
+            ["della__gpu", "jdh4", 16000,  900]]
     df = pd.DataFrame(jobs)
     fields = "cluster-partition,netid,cpu-hours,gpu-hours"
     df.columns = fields.split(",")
 
     result = msr.add_cpu_and_gpu_rankings(df, df.copy())
     result = result.sort_values("netid").reset_index(drop=True)
-    expected = pd.Series(["1/5", "2/5", "3/5", "N/A", "4/5"]).rename("CPU-rank")
+    expected = pd.Series(["1/5", "2/5", "3/5", "5/5", "4/5"]).rename("CPU-rank")
     pd.testing.assert_series_equal(result["CPU-rank"], expected)
     expected = pd.Series(["1/5", "4/5", "3/5", "5/5", "2/5"]).rename("GPU-rank")
     pd.testing.assert_series_equal(result["GPU-rank"], expected)
