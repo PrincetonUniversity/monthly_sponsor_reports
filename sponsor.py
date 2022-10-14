@@ -4,7 +4,7 @@ import pandas as pd
 
 def sponsor_per_cluster(netid, verbose=True):
   """Sponsor found for all large clusters even if user does not have an account on a specific cluster."""
-  cmd = f"ldapsearch -x -H ldap://ldap1.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uid={netid} displayname manager description"
+  cmd = f"ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uid={netid} displayname manager description"
   output = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True, timeout=5, text=True, check=True)
   lines = output.stdout.split('\n')
   if lines != [] and lines[-1] == "": lines = lines[:-1]
@@ -60,7 +60,7 @@ def sponsor_per_cluster(netid, verbose=True):
 
 def sponsor_full_name(netid, verbose=True):
   """Return the full name of the sponsor for the given netid of the sponsor."""
-  cmd = f"ldapsearch -x -H ldap://ldap1.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uid={netid} displayname"
+  cmd = f"ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uid={netid} displayname"
   output = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True, timeout=5, text=True, check=True)
   lines = output.stdout.split('\n')
   if lines != [] and lines[-1] == "": lines = lines[:-1]
