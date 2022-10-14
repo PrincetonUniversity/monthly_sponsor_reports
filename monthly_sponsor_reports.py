@@ -29,8 +29,8 @@ from email.mime.text import MIMEText
 # or unsubscribed_users and add their netid to the list
 
 # enter the gpu partitions here
-GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)", "della__gpu", "della__gpu-ee", "stellar__gpu",
-                          "tiger__cryoem(gpu)", "tiger__gpu", "tiger__motion", "traverse__all(gpu)"]
+GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)", "della__gpu", "della__gpu-ee(gpu)", "stellar__gpu",
+                          "tiger__cryoem(gpu)", "tiger__gpu", "tiger__motion", "traverse__all(gpu)", "della__gputest"]
 
 # conversion factors
 SECONDS_PER_MINUTE = 60
@@ -40,8 +40,8 @@ HOURS_PER_DAY = 24
 BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
 
 def get_date_range(today, N, report_type="sponsors"):
-  #return date(2022, 8, 15), date(2022, 9, 14)
-  #return date(2022, 6, 1), date(2022, 8, 31)
+  #return date(2022, 9, 15), date(2022, 10, 14)
+  #return date(2022, 7, 1), date(2022, 9, 30)
   # argparse restricts values of N
   def subtract_months(mydate, M):
     year, month = mydate.year, mydate.month
@@ -138,6 +138,10 @@ def delineate_partitions(cluster, gpu_job, partition):
   elif cluster == "tiger" and partition == "cryoem" and gpu_job:
     return f"{partition}(gpu)"
   elif cluster == "tiger" and partition == "cryoem" and not gpu_job:
+    return f"{partition}(cpu)"
+  elif cluster == "della" and partition == "gpu-ee" and gpu_job:
+    return f"{partition}(gpu)"
+  elif cluster == "della" and partition == "gpu-ee" and not gpu_job:
     return f"{partition}(cpu)"
   elif cluster == "traverse" and gpu_job:
     return "all(gpu)"
@@ -248,6 +252,7 @@ def add_cpu_and_gpu_rankings(dg, x):
     total_users    = x[x["cluster-partition"] == cluspart]["netid"].unique().size
     return f"{total_users}/{total_users}" if cpuhours == 0 else f"{cpu_hours_rank}/{total_users}"
   def gpu_ranking(cluspart, user, gpuhours):
+    if cluspart not in GPU_CLUSTER_PARTITIONS: return "N/A"
     gpu_hours_rank = pd.Index(x[x["cluster-partition"] == cluspart].sort_values(by="gpu-hours", ascending=False).netid).get_loc(user) + 1
     total_users    = x[x["cluster-partition"] == cluspart]["netid"].unique().size
     return f"{total_users}/{total_users}" if gpuhours == 0 else f"{gpu_hours_rank}/{total_users}"
@@ -335,13 +340,7 @@ def create_user_report(name, netid, start_date, end_date, body):
               #SBATCH --mail-user={netid}@princeton.edu
   """)
   report += textwrap.dedent(f"""
-            Are you running a parallel CPU code? Want to improve your CPU efficiency and
-            get your work done faster? Consider enrolling in this PICSciE/RC workshop:
-
-              Optimization Training with Intel Developer Tools
-              Thursday, September 29 at 2:00–5:00 PM (Zoom only)
-
-            Register for PICSciE/RC workshops here:
+            Want to improve your computational skills? Register for PICSciE/RC workshops:
 
               https://researchcomputing.princeton.edu/workshops
   """)
@@ -472,7 +471,7 @@ if __name__ == "__main__":
   # sanity checks and safeguards
   brakefile = f"{BASEPATH}/.brakefile"
   if args.email:
-    d = {"della":"curt", "stellar":"curt", "tiger":"wtang", "traverse":"curt", "displayname":"Garrett Wright"}
+    d = {"della":"curt", "stellar":"curt", "tiger":"curt", "traverse":"curt", "displayname":"Garrett Wright"}
     assert sponsor_per_cluster(netid="gbwright") == d, "RC ldap may be down"
     assert dg.shape[0] > 100, "Not enough records in dg dataframe"
     # script can only run once on the 1st or 15th of the month
@@ -597,7 +596,7 @@ if __name__ == "__main__":
       if args.email:
         send_email(report, f"{sponsor}@princeton.edu", start_date, end_date)
         if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date)
-        if sponsor == "macohen": send_email(report, "pbisal@pppl.gov"  , start_date, end_date)
+        if sponsor == "macohen": send_email(report, "pbisbal@pppl.gov"  , start_date, end_date)
         if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date)
   else:
     sys.exit("Error: report_type does not match choices.")
