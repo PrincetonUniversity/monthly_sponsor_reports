@@ -192,6 +192,12 @@ To compute the CPU-seconds used by the user `aturing` in April 2022:
 $ sacct -u aturing -X -n -S 2022-04-01T00:00:00 -E 2022-04-30T23:59:59 -o cputimeraw | awk '{sum += $1} END {print sum}'
 ```
 
+To compute CPU-hours (not CPU-seconds) for user `msbc` on the cluster `perseus`:
+
+```
+$ sacct -u msbc -X -n -M perseus -S 2020-05-15T00:00:00 -E 2021-05-14T23:59:59 -o cputimeraw | awk '{sum += $1} END {print sum/3600}'
+```
+
 ## Be Aware
 
 - A sponsor will only receive a report if one of their users ran at least one job in the reporting period.  
