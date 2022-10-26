@@ -195,13 +195,19 @@ $ sacct -u aturing -X -n -S 2022-04-01T00:00:00 -E 2022-04-30T23:59:59 -o cputim
 To compute CPU-hours (not CPU-seconds) for user `msbc` on the cluster `perseus`:
 
 ```
-$ sacct -u msbc -X -n -M perseus -S 2020-05-15T00:00:00 -E 2021-05-14T23:59:59 -o cputimeraw | awk '{sum += $1} END {print sum/3600}'
+$ sacct -u msbc -X -n -M perseus -S 2020-05-15T00:00:00 -E 2021-05-14T23:59:59 -o cputimeraw | awk '{sum += $1} END {print int(sum/3600)}'
 ```
 
 CPU-hours of GPU jobs on Stellar by users in cbe account (watch out for accounts with a comma in the name like "astro,kunz"):
 
 ```
-sacct -o cputimeraw -a -P -X -n -M stellar --starttime=2021-10-15 -E 2022-10-14 --accounts=cbe --partition=gpu | awk '{sum += $1} END {print sum/3600}'
+sacct -o cputimeraw -a -P -X -n -M stellar --starttime=2021-10-15 -E 2022-10-14 --accounts=cbe --partition=gpu | awk '{sum += $1} END {print int(sum/3600)}'
+```
+
+CPU-hours for each account on Stellar:
+
+```
+for act in `sacct -S 2022-04-01 -M stellar -a -X -n -o account | sort | uniq`; do printf "$act "; sacct -o cputimeraw -a -P -X -n --starttime=2022-04-01 -E now --accounts=${act} | awk '{sum += $1} END {print int(sum/3600)}';  done
 ```
 
 ## Be Aware
