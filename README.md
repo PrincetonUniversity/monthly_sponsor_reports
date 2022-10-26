@@ -198,6 +198,12 @@ To compute CPU-hours (not CPU-seconds) for user `msbc` on the cluster `perseus`:
 $ sacct -u msbc -X -n -M perseus -S 2020-05-15T00:00:00 -E 2021-05-14T23:59:59 -o cputimeraw | awk '{sum += $1} END {print sum/3600}'
 ```
 
+CPU-hours of GPU jobs on Stellar by users in cbe account (watch out for accounts with a comma in the name like "astro,kunz"):
+
+```
+sacct -o cputimeraw -a -P -X -n -M stellar --starttime=2021-10-15 -E 2022-10-14 --accounts=cbe --partition=gpu | awk '{sum += $1} END {print sum/3600}'
+```
+
 ## Be Aware
 
 - A sponsor will only receive a report if one of their users ran at least one job in the reporting period.  
