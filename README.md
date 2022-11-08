@@ -210,6 +210,31 @@ CPU-hours for each account on Stellar:
 for act in `sacct -S 2022-04-01 -M stellar -a -X -n -o account | sort | uniq`; do printf "$act "; sacct -o cputimeraw -a -P -X -n --starttime=2022-04-01 -E now --accounts=${act} | awk '{sum += $1} END {print int(sum/3600)}';  done
 ```
 
+Compute cpu-hours for certain users:
+
+```bash
+#/bin/bash
+  
+# always examine the accounts since they can get combined like on della with "cpu,physics"
+
+STARTDATE="2017-08-01"
+ENDDATE="2020-10-01"
+CLUSTER="perseus"
+ACCOUNTS="astro,kunz"
+
+USERS=$(sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -a -X -n -o user --accounts=${ACCOUNTS} | awk '{print $1}' | sort | uniq)
+for USER in ${USERS}
+do
+    sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -a -X -n -o cputimeraw -u ${USER} --accounts=${ACCOUNTS} 1>/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "${USER} NULL"
+        continue
+    fi
+    printf "${USER} "
+    sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -a -X -n -o cputimeraw -u ${USER} --accounts=${ACCOUNTS} | awk '{sum += $1} END {print int(sum/3600)}'
+done
+```
+
 ## Be Aware
 
 - A sponsor will only receive a report if one of their users ran at least one job in the reporting period.  
