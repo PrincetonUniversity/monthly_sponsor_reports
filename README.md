@@ -222,7 +222,7 @@ ENDDATE="2020-10-01"
 CLUSTER="perseus"
 ACCOUNTS="astro,kunz"
 
-USERS=$(sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -a -X -n -o user --accounts=${ACCOUNTS} | awk '{print $1}' | sort | uniq)
+USERS=$(sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -a -X -n -o user --accounts=${ACCOUNTS} | sort | uniq)
 for USER in ${USERS}
 do
     sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -a -X -n -o cputimeraw -u ${USER} --accounts=${ACCOUNTS} 1>/dev/null 2>&1
