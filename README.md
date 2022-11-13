@@ -121,7 +121,7 @@ $ python monthly_sponsor_reports.py --report-type=users --months=1 --email
 - hard code the date range at the top  
 - comment out the assert statement which checks for 1st or 15th of month  
 - run it  
-- then remove brakefile, uncomment assert and comment date range  
+- then remove brakefile, uncomment assert, comment date range and remove cache files  
 
 
 ## Definitions
