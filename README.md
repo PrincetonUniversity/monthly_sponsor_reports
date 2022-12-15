@@ -240,5 +240,5 @@ done
 - A sponsor will only receive a report if one of their users ran at least one job in the reporting period.  
 - If the sponsor is not found for a given user on a given cluster then that record is omitted. These events can be seen in the output and should be addressed. 
 - The script must be executed on a machine that can talk to ldap1.rc.princeton.edu.  
-- The script is written to only send emails once on the 1st of the month and then not again for at least 27 days (see `.brakefile` in "sanity checks and safeguards" in Python script).  
+- The script is written to only send emails on the 1st and 15th of the month. It cannot runs twice in a 7 day period (see `.brakefile` in "sanity checks and safeguards" in Python script).  
 - Rankings on Stellar are over all groups, i.e., the PU/PPPL and CIMES portions are not separated.
