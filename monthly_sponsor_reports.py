@@ -36,12 +36,12 @@ GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)", "della__gpu", "della__gpu-ee(gpu
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = 3600
 HOURS_PER_DAY = 24
-#BASEPATH = os.getcwd()
-BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
+BASEPATH = os.getcwd()
+#BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
 
 def get_date_range(today, N, report_type="sponsors"):
-  #return date(2022, 9, 15), date(2022, 10, 14)
-  #return date(2022, 7, 1), date(2022, 9, 30)
+  #return date(2022, 10, 15), date(2022, 11, 14)
+  #return date(2022, 9, 1), date(2022, 11, 30)
   # argparse restricts values of N
   def subtract_months(mydate, M):
     year, month = mydate.year, mydate.month
@@ -347,8 +347,7 @@ def create_user_report(name, netid, start_date, end_date, body):
   report += "\n"
   reply = (
   'Replying to this email will open a ticket with CSES. Please reply '
-  'with questions, changes to your sponsorship or to unsubscribe from these reports. '
-  'The next report will be sent on October 15.'
+  'with questions, changes to your sponsorship or to unsubscribe from these reports.'
   )
   report += "\n".join(textwrap.wrap(reply, width=80))
   return report
@@ -506,7 +505,7 @@ if __name__ == "__main__":
   if args.report_type == "users":
     assert datetime.now().strftime("%-d") == "15", "Script will only run on 15th of the month"
     # remove unsubscribed users and those that left the university
-    unsubscribed_users = ["bfaber", "ceerc", "sting", "ib4025", "mchitoto"]
+    unsubscribed_users = ["bfaber", "ceerc", "sting", "ib4025", "mchitoto", "musslick"]
     users = set(users) - set(unsubscribed_users)
     for user in sorted(users):
       sp = dg[dg.netid == user]
@@ -526,7 +525,7 @@ if __name__ == "__main__":
       report = create_user_report(get_full_name_of_user(user), user, start_date, end_date, body)
       print(report)
       if args.email: send_email(report, f"{user}@princeton.edu", start_date, end_date)
-      if args.email and random() < 0.02: send_email(report, "halverson@princeton.edu", start_date, end_date)
+      if args.email and random() < 0.01: send_email(report, "halverson@princeton.edu", start_date, end_date)
   elif args.report_type == "sponsors":
     assert datetime.now().strftime("%-d") == "1", "Script will only run on 1st of the month"
     ov = collapse_by_sponsor(dg)
