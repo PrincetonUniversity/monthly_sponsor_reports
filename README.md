@@ -73,7 +73,7 @@ $ cd monthly_sponsor_reports
 Run the unit tests:
 
 ```bash
-$ module load anaconda3/2021.11
+$ module load anaconda3/2022.5
 $ python -uB -m unittest tests/test_monthly_sponsor_reports.py -v
 ```
 
