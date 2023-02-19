@@ -64,7 +64,7 @@ def strip_accents(s):
   return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
 
 
-def get_full_name_from_ldap(netid, use_rc=False, include_netid=False, verbose=True, strip_accents=True):
+def get_full_name_from_ldap(netid, use_rc=False, include_netid=False, verbose=True, strip=True):
   """Return the full name for the given netid by using either rc or university ldap."""
   if use_rc:
     cmd = f"ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uid={netid} displayname"
@@ -77,7 +77,7 @@ def get_full_name_from_ldap(netid, use_rc=False, include_netid=False, verbose=Tr
     if "displayname:: " in line:
       rawname = line.split(":: ")[1].strip()
       displayname = base64.b64decode(rawname).decode("utf-8")
-      displayname = strip_accents(displayname) if strip_accents else displayname
+      displayname = strip_accents(displayname) if strip else displayname
       return f"{displayname} ({netid})" if include_netid else displayname
     if "displayname: " in line:
       displayname = line.split(": ")[1].strip()
