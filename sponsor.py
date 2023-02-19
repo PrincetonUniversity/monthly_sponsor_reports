@@ -4,8 +4,8 @@ import pandas as pd
 import base64
 import unicodedata
 
-def sponsor_per_cluster(netid, verbose=True):
-  """Sponsor found for all large clusters even if user does not have an account on a specific cluster."""
+def get_sponsor_netid_per_cluster_dict_from_ldap(netid, verbose=True):
+  """Returns a dictionary of sponsor netids for a given user netid for the large clusters."""
   cmd = f"ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uid={netid} displayname manager description"
   output = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True, timeout=5, text=True, check=True)
   lines = output.stdout.split('\n')
@@ -64,9 +64,12 @@ def strip_accents(s):
   return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
 
 
-def sponsor_full_name(netid, verbose=True, strip_accents=True):
-  """Return the full name of the sponsor for the given netid of the sponsor."""
-  cmd = f"ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uid={netid} displayname"
+def get_full_name_from_ldap(netid, use_rc=False, include_netid=False, verbose=True, strip_accents=True):
+  """Return the full name for the given netid by using either rc or university ldap."""
+  if use_rc:
+    cmd = f"ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uid={netid} displayname"
+  else:
+    cmd = f"ldapsearch -x uid={netid} displayname"
   output = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True, timeout=5, text=True, check=True)
   lines = output.stdout.split('\n')
   displayname = None
@@ -74,34 +77,16 @@ def sponsor_full_name(netid, verbose=True, strip_accents=True):
     if "displayname:: " in line:
       rawname = line.split(":: ")[1].strip()
       displayname = base64.b64decode(rawname).decode("utf-8")
-      return strip_accents(displayname) if strip_accents else displayname
+      displayname = strip_accents(displayname) if strip_accents else displayname
+      return f"{displayname} ({netid})" if include_netid else displayname
     if "displayname: " in line:
       displayname = line.split(": ")[1].strip()
-      return displayname
-  if displayname is None and verbose: print(f"W: Name not found in CSES LDAP for sponsor {netid}.")
+      return f"{displayname} ({netid})" if include_netid else displayname
+  if displayname is None and verbose: print(f"W: Name not found in LDAP for {netid} with use_rc={use_rc}.")
   return displayname
 
 
-def get_full_name_of_user(netid, strip_accents=True):
-  """Return the full name of the user by calling ldapsearch."""
-  cmd = f"ldapsearch -x uid={netid} displayname"
-  output = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True, timeout=5, text=True, check=True)
-  lines = output.stdout.split('\n')
-  for line in lines:
-    if "displayname:: " in line:
-      raw_name = line.split(":: ")[1].strip()
-      full_name = base64.b64decode(raw_name).decode("utf-8")
-      if strip_accents: full_name = strip_accents(full_name)
-      return f"{full_name} ({netid})"
-    if line.startswith("displayname:"):
-      full_name = line.replace("displayname:", "").strip()
-      # consider removing next line since b64 is now handled properly
-      if full_name.replace(".", "").replace(",", "").replace(" ", "").replace("-", "").isalpha():
-        return f"{full_name} ({netid})"
-  return netid
-
-
-def get_name_of_user_from_log(netid):
+def get_full_name_of_user_from_log(netid):
   """Return the full name of the user from the log file."""
   with open("tigress_user_changes.log", "r") as f:
     data = f.readlines()
