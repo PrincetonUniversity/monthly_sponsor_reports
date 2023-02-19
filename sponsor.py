@@ -1,6 +1,8 @@
 import os
 import subprocess
 import pandas as pd
+import base64
+import unicodedata
 
 def sponsor_per_cluster(netid, verbose=True):
   """Sponsor found for all large clusters even if user does not have an account on a specific cluster."""
@@ -58,6 +60,10 @@ def sponsor_per_cluster(netid, verbose=True):
   return sponsor
 
 
+def strip_accents(s):
+  return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
+
 def sponsor_full_name(netid, verbose=True):
   """Return the full name of the sponsor for the given netid of the sponsor."""
   cmd = f"ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uid={netid} displayname"
@@ -67,19 +73,55 @@ def sponsor_full_name(netid, verbose=True):
 
   displayname = None
   for line in lines:
+    if "displayname:: " in line:
+      displayname = line.split(":: ")[1].strip()
+      displayname = strip_accents(base64.b64decode(displayname).decode("utf-8"))
     if "displayname: " in line:
       displayname = line.split(": ")[1].strip()
-  
-  if not displayname and verbose: print(f"W: Name not found in CSES LDAP for sponsor {netid}.")
+  if displayname is None and verbose: print(f"W: Name not found in CSES LDAP for sponsor {netid}.")
   return displayname
+
 
 def get_full_name_of_user(netid):
   cmd = f"ldapsearch -x uid={netid} displayname"
   output = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True, timeout=5, text=True, check=True)
   lines = output.stdout.split('\n')
   for line in lines:
+    if "displayname:: " in line:
+      full_name = line.split(":: ")[1].strip()
+      full_name = strip_accents(base64.b64decode(full_name).decode("utf-8"))
+      if full_name.replace(".", "").replace(",", "").replace(" ", "").replace("-", "").isalpha():
+        return f"{full_name} ({netid})"
     if line.startswith("displayname:"):
       full_name = line.replace("displayname:", "").strip()
       if full_name.replace(".", "").replace(",", "").replace(" ", "").replace("-", "").isalpha():
         return f"{full_name} ({netid})"
   return netid
+
+
+def get_missing_name_from_log(netid):
+  with open("tigress_user_changes.log", "r") as f:
+      data = f.readlines()
+  pattern = f" {netid} "
+  logname = None
+  for line in data:
+      if pattern in line:
+          if f" Added user {netid} (" in line:
+              logname = line.split(f" Added user {netid} (")[-1].split(")")[0].split(" - ")[-1]
+          if f" Removed user {netid} (" in line:
+              logname = line.split(f" Removed user {netid} (")[-1].split(")")[0]
+  return logname
+
+
+def get_missing_sponsor_from_log(netid):
+  with open("tigress_user_changes.log", "r") as f:
+      data = f.readlines()
+  pattern = f" {netid} "
+  sponsor = None
+  for line in data:
+      if pattern in line:
+          if f" Added user {netid} " in line and " with sponsor " in line:
+              sponsor = line.split(" with sponsor ")[-1].split()[0]
+          if f" Removed user {netid} " in line and " sponsor " in line:
+              sponsor = line.split(" sponsor ")[-1].split(";")[0]
+  return sponsor
