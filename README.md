@@ -225,13 +225,13 @@ ACCOUNTS="astro,kunz"
 USERS=$(sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -a -X -n -o user --accounts=${ACCOUNTS} | sort | uniq)
 for USER in ${USERS}
 do
-    sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -a -X -n -o cputimeraw -u ${USER} --accounts=${ACCOUNTS} 1>/dev/null 2>&1
+    sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -X -n -o cputimeraw -u ${USER} --accounts=${ACCOUNTS} 1>/dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "${USER} NULL"
         continue
     fi
     printf "${USER} "
-    sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -a -X -n -o cputimeraw -u ${USER} --accounts=${ACCOUNTS} | awk '{sum += $1} END {print int(sum/3600)}'
+    sacct -S ${STARTDATE} -E ${ENDDATE} -M ${CLUSTER} -X -n -o cputimeraw -u ${USER} --accounts=${ACCOUNTS} | awk '{sum += $1} END {print int(sum/3600)}'
 done
 ```
 
