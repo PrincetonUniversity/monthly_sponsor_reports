@@ -29,19 +29,19 @@ from email.mime.text import MIMEText
 # or unsubscribed_users and add their netid to the list
 
 # enter the gpu partitions here
-GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)", "della__gpu", "della__gpu-ee(gpu)", "stellar__gpu",
+GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)", "della__gpu", "della__gpu-ee(gpu)", "stellar__gpu", "della__mig",
                           "tiger__cryoem(gpu)", "tiger__gpu", "tiger__motion", "traverse__all(gpu)", "della__gputest"]
 
 # conversion factors
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = 3600
 HOURS_PER_DAY = 24
-BASEPATH = os.getcwd()
-#BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
+#BASEPATH = os.getcwd()
+BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
 
 def get_date_range(today, N, report_type="sponsors"):
-  #return date(2022, 10, 15), date(2022, 11, 14)
-  #return date(2022, 9, 1), date(2022, 11, 30)
+  #return date(2023, 1, 15), date(2023, 2, 14)
+  #return date(2022, 12, 1), date(2023, 2, 28)
   # argparse restricts values of N
   def subtract_months(mydate, M):
     year, month = mydate.year, mydate.month
@@ -335,15 +335,20 @@ def create_user_report(name, netid, start_date, end_date, body):
             Add the following lines to your Slurm scripts to receive an email report with
             efficiency information after each job finishes:
 
-              #SBATCH --mail-type=begin
               #SBATCH --mail-type=end
               #SBATCH --mail-user={netid}@princeton.edu
   """)
   report += textwrap.dedent(f"""
             Want to improve your computational skills? Register for PICSciE/RC workshops:
-
+  
               https://researchcomputing.princeton.edu/workshops
   """)
+  #report += textwrap.dedent(f"""
+  #          Is your research group looking to accelerate an HPC or AI code? Talk one-on-one
+  #          with NVIDIA mentors at the GPU Hackathon Information Session on February 22:
+  #
+  #            https://forms.gle/wD5YNbDK6bUEEBzE7
+  #""")
   report += "\n"
   reply = (
   'Replying to this email will open a ticket with CSES. Please reply '
@@ -517,6 +522,7 @@ if __name__ == "__main__":
           rows = rows.append(cl[cols1].rename(columns=renamings))
       rows["GPU-hours"] = rows.apply(lambda row: row["GPU-hours"] if row["cluster-partition"] in GPU_CLUSTER_PARTITIONS else "N/A", axis="columns")
       rows["GPU-eff"]   = rows.apply(lambda row: row["GPU-eff"]   if row["cluster-partition"] in GPU_CLUSTER_PARTITIONS else "N/A", axis="columns")
+      rows["GPU-eff"]   = rows.apply(lambda row: row["GPU-eff"]   if row["Partition"] != "mig" else "--", axis="columns")
       if (rows[rows["cluster-partition"].isin(GPU_CLUSTER_PARTITIONS)].shape[0] == 0):
         rows.drop(columns=["GPU-hours", "GPU-rank", "GPU-eff"], inplace=True)
       rows.drop(columns=["cluster-partition"], inplace=True)
@@ -555,6 +561,7 @@ if __name__ == "__main__":
             gpu_hours_rank = total_sponsors
 
           cl = add_proportion_in_parenthesis(cl.copy(), "cpu-hours", replace=True)
+          cl["account"] = cl["account"].apply(lambda x: uniq_series(x.split(",")))
           body += "\n"
           body += add_heading(cl[cols2].rename(columns=renamings).to_string(index=False, justify="center"), cluster)
           body += special_requests(sponsor, cluster, cl, start_date, end_date)
@@ -571,6 +578,7 @@ if __name__ == "__main__":
       details["GPU-hours"] = details.apply(lambda row: row["GPU-hours"] if row["cluster-partition"] in GPU_CLUSTER_PARTITIONS else "N/A", axis="columns")
       details["GPU-rank"]  = details.apply(lambda row: row["GPU-rank"]  if row["cluster-partition"] in GPU_CLUSTER_PARTITIONS else "N/A", axis="columns")
       details["GPU-eff"]   = details.apply(lambda row: row["GPU-eff"]   if row["cluster-partition"] in GPU_CLUSTER_PARTITIONS else "N/A", axis="columns")
+      details["GPU-eff"]   = details.apply(lambda row: row["GPU-eff"]   if row["Partition"] != "mig" else "--", axis="columns")
       if (details[details["cluster-partition"].isin(GPU_CLUSTER_PARTITIONS)].shape[0] == 0):
         details.drop(columns=["GPU-hours", "GPU-rank", "GPU-eff"], inplace=True)
       details.drop(columns=["cluster-partition"], inplace=True)
