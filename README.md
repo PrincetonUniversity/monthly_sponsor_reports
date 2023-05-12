@@ -70,10 +70,27 @@ $ git clone https://github.com/PrincetonUniversity/monthly_sponsor_reports.git
 $ cd monthly_sponsor_reports
 ```
 
+Examine the help menu:
+
+```bash
+$ module load anaconda3/2023.3
+$ python monthly_sponsor_reports.py -h
+usage: monthly_sponsor_reports.py [-h] --report-type {sponsors,users} --months N --basepath PATH [--email]
+
+Monthly Sponsor and User Reports
+
+options:
+  -h, --help            show this help message and exit
+  --report-type {sponsors,users}
+                        Specify the report type
+  --months N            Reporting period covers N months
+  --basepath PATH       Specify the path to this script
+  --email               Flag to send reports via email
+```
+
 Run the unit tests:
 
 ```bash
-$ module load anaconda3/2022.5
 $ python -uB -m unittest tests/test_monthly_sponsor_reports.py -v
 ```
 
@@ -82,7 +99,7 @@ $ python -uB -m unittest tests/test_monthly_sponsor_reports.py -v
 If all of the tests pass then do a dry run (which takes a few minutes):
 
 ```bash
-$ python monthly_sponsor_reports.py --report-type=sponsors --months=3
+$ python monthly_sponsor_reports.py --report-type=sponsors --months=3 --basepath=$(PWD)
 ```
 
 It is normal to see warnings like the following during the dry run:
@@ -99,7 +116,7 @@ W: User mlakshmi has multiple primary sponsors: gandrea,cbus. Using gandrea.
 The output will be sent to stdout instead of email for the dry run. If the output looks good then run once more with emails enabled:
 
 ```bash
-$ python monthly_sponsor_reports.py --report-type=sponsors --months=3 --email
+$ python monthly_sponsor_reports.py --report-type=sponsors --months=3 --basepath=$(PWD) --email
 ```
 
 ### User Reports
@@ -107,13 +124,13 @@ $ python monthly_sponsor_reports.py --report-type=sponsors --months=3 --email
 For user reports, one uses:
 
 ```bash
-$ python monthly_sponsor_reports.py --report-type=users --months=1
+$ python monthly_sponsor_reports.py --report-type=users --months=1 --basepath=$(PWD)
 ```
 
 And then:
 
 ```
-$ python monthly_sponsor_reports.py --report-type=users --months=1 --email
+$ python monthly_sponsor_reports.py --report-type=users --months=1 --basepath=$(PWD) --email
 ```
 
 ## Dry Run
@@ -136,7 +153,37 @@ These reports run under cron on tigergpu:
 
 ```
 [jdh4@tigergpu ~]$ crontab -l
-55 8 1 * * /usr/licensed/anaconda3/2021.11/bin/python -uB /home/jdh4/bin/monthly_sponsor_reports/monthly_sponsor_reports.py --report-type=sponsors --months=3 --email > /home/jdh4/bin/monthly_sponsor_reports/output.log 2>&1
+SHELL=/bin/bash
+MAILTO=admin@princeton.edu
+MTH=/home/jdh4/bin/monthly_sponsor_reports
+52 8  1 * * ${MTH}/sponsors.sh
+52 8 15 * * ${MTH}/users.sh
+```
+
+The scripts are:
+
+```
+$ cat sponsors.sh
+#!/bin/bash
+PY3=/usr/licensed/anaconda3/2023.3/bin
+MTH=/home/jdh4/bin/monthly_sponsor_reports
+SECS=$(date +%s)
+${PY3}/python -uB ${MTH}/monthly_sponsor_reports.py \
+                         --report-type=sponsors \
+                         --basepath=${MTH} \
+                         --months=3 > ${MTH}/archive/sponsors.log.${SECS} 2>&1
+```
+
+```
+$ cat users.sh
+#!/bin/bash
+PY3=/usr/licensed/anaconda3/2023.3/bin
+MTH=/home/jdh4/bin/monthly_sponsor_reports
+SECS=$(date +%s)
+${PY3}/python -uB ${MTH}/monthly_sponsor_reports.py \
+                         --report-type=users \
+                         --basepath=${MTH} \
+                         --months=1 > ${MTH}/archive/users.log.${SECS} 2>&1
 ```
 
 ## Partitions
