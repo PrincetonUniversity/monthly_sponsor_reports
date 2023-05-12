@@ -4,7 +4,12 @@ import pandas as pd
 import base64
 import unicodedata
 
-def get_sponsor_netid_per_cluster_dict_from_ldap(netid, verbose=True):
+
+def strip_accents(s):
+  return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
+
+def get_sponsor_netid_per_cluster_dict_from_ldap(netid, verbose=True, strip=False):
   """Returns a dictionary of sponsor netids for a given user netid for the large clusters."""
   cmd = f"ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uid={netid} displayname manager description"
   output = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True, timeout=5, text=True, check=True)
@@ -16,6 +21,10 @@ def get_sponsor_netid_per_cluster_dict_from_ldap(netid, verbose=True):
   displayname = None
   managers = []
   for i, line in enumerate(lines):
+    if "displayname:: " in line:
+      rawname = line.split(":: ")[1].strip()
+      displayname = base64.b64decode(rawname).decode("utf-8")
+      displayname = strip_accents(displayname) if strip else displayname
     if "displayname: " in line:
       displayname = line.split(": ")[1].strip()
     if "manager: " in line and "uid=" in line:
@@ -58,10 +67,6 @@ def get_sponsor_netid_per_cluster_dict_from_ldap(netid, verbose=True):
       sponsor[cluster] = sponsor_netid
 
   return sponsor
-
-
-def strip_accents(s):
-  return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
 
 
 def get_full_name_from_ldap(netid, use_rc=False, include_netid=False, verbose=True, strip=True):

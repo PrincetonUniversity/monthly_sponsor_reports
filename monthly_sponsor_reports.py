@@ -12,9 +12,8 @@ from random import random
 import numpy as np
 import pandas as pd
 
-from sponsor import sponsor_full_name
-from sponsor import sponsor_per_cluster
-from sponsor import get_full_name_of_user
+from sponsor import get_full_name_from_ldap
+from sponsor import get_sponsor_netid_per_cluster_dict_from_ldap
 
 from efficiency import get_stats_dict  # wget https://raw.githubusercontent.com/jdh4/job_defense_shield/main/efficiency.py
 from efficiency import cpu_efficiency
@@ -36,12 +35,10 @@ GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)", "della__gpu", "della__gpu-ee(gpu
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = 3600
 HOURS_PER_DAY = 24
-#BASEPATH = os.getcwd()
-BASEPATH = "/home/jdh4/bin/monthly_sponsor_reports"
 
 def get_date_range(today, N, report_type="sponsors"):
-  #return date(2023, 1, 15), date(2023, 2, 14)
-  #return date(2022, 12, 1), date(2023, 2, 28)
+  #return date(2023, 3, 15), date(2023, 5, 14)
+  #return date(2023, 4, 1), date(2023, 4, 30)
   # argparse restricts values of N
   def subtract_months(mydate, M):
     year, month = mydate.year, mydate.month
@@ -78,9 +75,9 @@ def send_email(s, addressee, start_date, end_date, sender="cses@princeton.edu"):
   s.quit()
   return None
 
-def raw_dataframe_from_sacct(flags, start_date, end_date, fields, renamings=[], numeric_fields=[], use_cache=False):
-  fname = f"{BASEPATH}/cache_sacct_{start_date.strftime('%Y%m%d')}.csv"
-  if use_cache and os.path.exists(fname):
+def raw_dataframe_from_sacct(flags, start_date, end_date, fields, basepath, renamings=[], numeric_fields=[], email=False, use_cache=False):
+  fname = f"{basepath}/cache_sacct_{start_date.strftime('%Y%m%d')}.csv"
+  if not email and use_cache and os.path.exists(fname):
     print("Reading cache file ... ", end="", flush=True)
     rw = pd.read_csv(fname, low_memory=False)
     print("done.", flush=True)
@@ -95,7 +92,7 @@ def raw_dataframe_from_sacct(flags, start_date, end_date, fields, renamings=[], 
     rw.columns = fields.split(",")
     rw.rename(columns=renamings, inplace=True)
     rw[numeric_fields] = rw[numeric_fields].apply(pd.to_numeric)
-    if use_cache: rw.to_csv(fname, index=False)
+    if not email and use_cache: rw.to_csv(fname, index=False)
   return rw
 
 def gpus_per_job(tres):
@@ -338,11 +335,11 @@ def create_user_report(name, netid, start_date, end_date, body):
               #SBATCH --mail-type=end
               #SBATCH --mail-user={netid}@princeton.edu
   """)
-  report += textwrap.dedent(f"""
-            Want to improve your computational skills? Register for PICSciE/RC workshops:
-  
-              https://researchcomputing.princeton.edu/workshops
-  """)
+  #report += textwrap.dedent(f"""
+  #          Want to improve your computational skills? Register for PICSciE/RC workshops:
+  # 
+  #            https://researchcomputing.princeton.edu/workshops
+  #""")
   #report += textwrap.dedent(f"""
   #          Is your research group looking to accelerate an HPC or AI code? Talk one-on-one
   #          with NVIDIA mentors at the GPU Hackathon Information Session on February 22:
@@ -403,8 +400,10 @@ if __name__ == "__main__":
                       help='Specify the report type')
   parser.add_argument('--months', required=True, type=int, metavar='N', choices=range(1, 8),
                       help='Reporting period covers N months')
+  parser.add_argument('--basepath', required=True, type=str, metavar='PATH',
+                      help='Specify the path to this script')
   parser.add_argument('--email', action='store_true', default=False,
-                      help='Send reports via email')
+                      help='Flag to send reports via email')
 
   args = parser.parse_args()
   #start_date = datetime.strptime(args.start, '%Y-%m-%d')
@@ -424,7 +423,7 @@ if __name__ == "__main__":
   fields = "jobid,user,cluster,account,partition,cputimeraw,elapsedraw,timelimitraw,nnodes,ncpus,alloctres,submit,eligible,start,admincomment"
   renamings = {"user":"netid", "cputimeraw":"cpu-seconds", "nnodes":"nodes", "ncpus":"cores", "timelimitraw":"limit-minutes"}
   numeric_fields = ["cpu-seconds", "elapsedraw", "limit-minutes", "nodes", "cores", "submit", "eligible"]
-  df = raw_dataframe_from_sacct(flags, start_date, end_date, fields, renamings, numeric_fields, use_cache=True)
+  df = raw_dataframe_from_sacct(flags, start_date, end_date, fields, args.basepath, renamings, numeric_fields, email=args.email, use_cache=True)
 
   # filter pending jobs and clean
   df = df[pd.notnull(df.alloctres) & (df.alloctres != "")]
@@ -459,7 +458,7 @@ if __name__ == "__main__":
   # get sponsor info for each unique netid (this minimizes ldap calls)
   user_sponsor = df[["netid"]].drop_duplicates().sort_values("netid").copy()
   if not args.email: print("Getting sponsor for each user (which may require several seconds) ... ", end="\n", flush=True)
-  user_sponsor["sponsor-dict"] = user_sponsor.netid.apply(lambda netid: sponsor_per_cluster(netid, verbose=True))
+  user_sponsor["sponsor-dict"] = user_sponsor.netid.apply(lambda netid: get_sponsor_netid_per_cluster_dict_from_ldap(netid, verbose=True))
 
   # perform a two-column groupby (cluster-partition and netid) and then join users to their sponsors
   dg = groupby_cluster_partition_netid_and_get_sponsor(df, user_sponsor)
@@ -473,10 +472,10 @@ if __name__ == "__main__":
   dg = add_cpu_and_gpu_rankings(dg, dg.copy())
 
   # sanity checks and safeguards
-  brakefile = f"{BASEPATH}/.brakefile"
+  brakefile = f"{args.basepath}/.brakefile"
   if args.email:
-    d = {"della":"curt", "stellar":"curt", "tiger":"curt", "traverse":"curt", "displayname":"Garrett Wright"}
-    assert sponsor_per_cluster(netid="gbwright") == d, "RC ldap may be down"
+    d = {"della":"curt", "stellar":"curt", "tiger":"curt", "tigressdata":"curt", "traverse":"curt", "displayname":"Garrett Wright"}
+    assert get_sponsor_netid_per_cluster_dict_from_ldap(netid="gbwright") == d, "RC ldap may be down"
     assert dg.shape[0] > 100, "Not enough records in dg dataframe"
     # script can only run once on the 1st or 15th of the month
     if os.path.exists(brakefile):
@@ -488,8 +487,9 @@ if __name__ == "__main__":
   # write dataframe to file for archiving
   cols = ["cluster", "sponsor", "netid", "name", "cpu-hours", "CPU-eff", "CPU-rank", "gpu-hours", "GPU-eff", "GPU-rank", \
           "jobs", "account", "partition", "cluster-partition"]
-  fname = f"{BASEPATH}/cluster_sponsor_user_{start_date.strftime('%-d%b%Y')}_{end_date.strftime('%-d%b%Y')}.csv"
-  dg[cols].to_csv(fname, index=False)
+  if args.email and os.path.exists(f"{args.basepath}/archive"):
+    fname = f"{args.basepath}/archive/cluster_sponsor_user_{start_date.strftime('%-d%b%Y')}_{end_date.strftime('%-d%b%Y')}.csv"
+    dg[cols].to_csv(fname, index=False)
 
   # create reports (each sponsor is guaranteed to have at least one user by construction above)
   cols1 = ["cluster", "partition", "cluster-partition", "cpu-hours", "CPU-rank", "CPU-eff", \
@@ -519,7 +519,7 @@ if __name__ == "__main__":
       for cluspart in clusparts:
         cl = sp[sp["cluster-partition"] == cluspart].copy()
         if not cl.empty:
-          rows = rows.append(cl[cols1].rename(columns=renamings))
+          rows = pd.concat([rows, cl[cols1].rename(columns=renamings)])
       rows["GPU-hours"] = rows.apply(lambda row: row["GPU-hours"] if row["cluster-partition"] in GPU_CLUSTER_PARTITIONS else "N/A", axis="columns")
       rows["GPU-eff"]   = rows.apply(lambda row: row["GPU-eff"]   if row["cluster-partition"] in GPU_CLUSTER_PARTITIONS else "N/A", axis="columns")
       rows["GPU-eff"]   = rows.apply(lambda row: row["GPU-eff"]   if row["Partition"] != "mig" else "--", axis="columns")
@@ -528,7 +528,7 @@ if __name__ == "__main__":
       rows.drop(columns=["cluster-partition"], inplace=True)
       body = "\n".join([2 * " " + row for row in rows.to_string(index=False, justify="center").split("\n")])
       body += "\n\n"
-      report = create_user_report(get_full_name_of_user(user), user, start_date, end_date, body)
+      report = create_user_report(get_full_name_from_ldap(user), user, start_date, end_date, body)
       print(report)
       if args.email: send_email(report, f"{user}@princeton.edu", start_date, end_date)
       if args.email and random() < 0.01: send_email(report, "halverson@princeton.edu", start_date, end_date)
@@ -596,7 +596,7 @@ if __name__ == "__main__":
       body += "\n"
 
       # create report
-      name = sponsor_full_name(sponsor, verbose=True)
+      name = get_full_name_from_ldap(sponsor, verbose=True)
       report = create_report(name, sponsor, start_date, end_date, body)
       print(report)
 
