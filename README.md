@@ -75,7 +75,10 @@ Examine the help menu:
 ```bash
 $ module load anaconda3/2023.3
 $ python monthly_sponsor_reports.py -h
-usage: monthly_sponsor_reports.py [-h] --report-type {sponsors,users} --months N --basepath PATH [--email]
+usage: monthly_sponsor_reports.py [-h] --report-type {sponsors,users} \
+                                       --months N \
+                                       --basepath PATH \
+                                       [--email]
 
 Monthly Sponsor and User Reports
 
@@ -170,8 +173,9 @@ MTH=/home/jdh4/bin/monthly_sponsor_reports
 SECS=$(date +%s)
 ${PY3}/python -uB ${MTH}/monthly_sponsor_reports.py \
                          --report-type=sponsors \
+                         --months=3 \
                          --basepath=${MTH} \
-                         --months=3 > ${MTH}/archive/sponsors.log.${SECS} 2>&1
+                         --email > ${MTH}/archive/sponsors.log.${SECS} 2>&1
 ```
 
 ```
@@ -182,8 +186,9 @@ MTH=/home/jdh4/bin/monthly_sponsor_reports
 SECS=$(date +%s)
 ${PY3}/python -uB ${MTH}/monthly_sponsor_reports.py \
                          --report-type=users \
+                         --months=1 \
                          --basepath=${MTH} \
-                         --months=1 > ${MTH}/archive/users.log.${SECS} 2>&1
+                         --email > ${MTH}/archive/users.log.${SECS} 2>&1
 ```
 
 ## Partitions
