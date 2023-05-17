@@ -67,8 +67,8 @@ Obtain the code:
 ```bash
 $ ssh <YourNetID>@della.princeton.edu
 $ git clone https://github.com/PrincetonUniversity/monthly_sponsor_reports.git
-$ wget https://raw.githubusercontent.com/jdh4/job_defense_shield/main/efficiency.py
 $ cd monthly_sponsor_reports
+$ wget https://raw.githubusercontent.com/jdh4/job_defense_shield/main/efficiency.py
 ```
 
 Examine the help menu:
@@ -155,7 +155,7 @@ A 2-hour job (wall-clock time) that allocates 4 CPU-cores consumes 8 CPU-hours. 
 
 These reports run under cron on tigergpu:
 
-```
+```bash
 [jdh4@tigergpu ~]$ crontab -l
 SHELL=/bin/bash
 MAILTO=admin@princeton.edu
@@ -166,7 +166,7 @@ MTH=/home/jdh4/bin/monthly_sponsor_reports
 
 The scripts are:
 
-```
+```bash
 $ cat sponsors.sh
 #!/bin/bash
 PY3=/usr/licensed/anaconda3/2023.3/bin
@@ -179,7 +179,7 @@ ${PY3}/python -uB ${MTH}/monthly_sponsor_reports.py \
                          --email > ${MTH}/archive/sponsors.log.${SECS} 2>&1
 ```
 
-```
+```bash
 $ cat users.sh
 #!/bin/bash
 PY3=/usr/licensed/anaconda3/2023.3/bin
