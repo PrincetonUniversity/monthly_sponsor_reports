@@ -67,6 +67,7 @@ Obtain the code:
 ```bash
 $ ssh <YourNetID>@della.princeton.edu
 $ git clone https://github.com/PrincetonUniversity/monthly_sponsor_reports.git
+$ wget https://raw.githubusercontent.com/jdh4/job_defense_shield/main/efficiency.py
 $ cd monthly_sponsor_reports
 ```
 
