@@ -103,7 +103,7 @@ $ python -uB -m unittest tests/test_monthly_sponsor_reports.py -v
 If all of the tests pass then do a dry run (which takes a few minutes):
 
 ```bash
-$ python monthly_sponsor_reports.py --report-type=sponsors --months=3 --basepath=$(PWD)
+$ python monthly_sponsor_reports.py --report-type=sponsors --months=3 --basepath=$(pwd)
 ```
 
 It is normal to see warnings like the following during the dry run:
@@ -120,7 +120,7 @@ W: User mlakshmi has multiple primary sponsors: gandrea,cbus. Using gandrea.
 The output will be sent to stdout instead of email for the dry run. If the output looks good then run once more with emails enabled:
 
 ```bash
-$ python monthly_sponsor_reports.py --report-type=sponsors --months=3 --basepath=$(PWD) --email
+$ python monthly_sponsor_reports.py --report-type=sponsors --months=3 --basepath=$(pwd) --email
 ```
 
 ### User Reports
@@ -128,13 +128,13 @@ $ python monthly_sponsor_reports.py --report-type=sponsors --months=3 --basepath
 For user reports, one uses:
 
 ```bash
-$ python monthly_sponsor_reports.py --report-type=users --months=1 --basepath=$(PWD)
+$ python monthly_sponsor_reports.py --report-type=users --months=1 --basepath=$(pwd)
 ```
 
 And then:
 
 ```
-$ python monthly_sponsor_reports.py --report-type=users --months=1 --basepath=$(PWD) --email
+$ python monthly_sponsor_reports.py --report-type=users --months=1 --basepath=$(pwd) --email
 ```
 
 ## Dry Run
