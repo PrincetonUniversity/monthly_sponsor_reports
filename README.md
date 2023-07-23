@@ -40,13 +40,17 @@ your group used 3250 GPU-hours or 0.6% of the 554101 total GPU-hours
 yielding a ranking of 45 of 101 by GPU-hours used.
 
 
-                                  Detailed Breakdown
+                                   Detailed Breakdown
 --------------------------------------------------------------------------------------
 Cluster  NetID  Partition  CPU-hours CPU-rank CPU-eff GPU-hours GPU-rank GPU-eff  Jobs
 --------------------------------------------------------------------------------------
- Della  rgozde    serial     11688      6/79     95%      N/A       N/A     N/A     41
- Tiger  jiryna  all(cpu)         1     17/22      --      N/A       N/A     N/A      9
- Tiger  jiryna  all(gpu)       498     26/41      9%       40     29/41     17%    366
+ Della  edevonte     cpu     125017   12/231     88%      N/A       N/A     N/A   3465
+ Della  mlakshmi     cpu      80638  121/231     68%      N/A       N/A     N/A     11
+ Della  mlakshmi      ds       2000     2/16     71%      N/A       N/A     N/A     22
+ Della    rgozde     cpu       3238     6/79     95%      N/A       N/A     N/A     41
+ Della    rgozde     gpu       1000    16/49     91%      250      7/17     52%    101
+ Tiger    jiryna  serial    1065273    17/22     91%      N/A       N/A     N/A    252
+ Tiger      sime     gpu      98071    26/41      9%     3250     29/41     17%    192
 
 
 Definitions: A 2-hour job (wall-clock time) that allocates 4 CPU-cores
