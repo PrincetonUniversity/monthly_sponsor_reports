@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 import math
 import argparse
 import subprocess
@@ -18,7 +17,6 @@ from sponsor import get_sponsor_netid_per_cluster_dict_from_ldap
 from efficiency import get_stats_dict  # wget https://raw.githubusercontent.com/jdh4/job_defense_shield/main/efficiency.py
 from efficiency import cpu_efficiency
 from efficiency import gpu_efficiency
-from efficiency import cpu_memory_usage
 
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -28,8 +26,17 @@ from email.mime.text import MIMEText
 # or unsubscribed_users and add their netid to the list
 
 # enter the gpu partitions here
-GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)", "della__gpu", "della__gpu-ee(gpu)", "stellar__gpu", "della__mig",
-                          "tiger__cryoem(gpu)", "tiger__gpu", "tiger__motion", "traverse__all(gpu)", "della__gputest"]
+GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)",
+                          "della__cli",
+                          "della__gpu",
+                          "della__gpu-ee(gpu)",
+                          "della__gputest",
+                          "della__mig",
+                          "stellar__gpu",
+                          "tiger__cryoem(gpu)",
+                          "tiger__gpu",
+                          "tiger__motion",
+                          "traverse__all(gpu)"]
 
 # conversion factors
 SECONDS_PER_MINUTE = 60
@@ -38,7 +45,7 @@ HOURS_PER_DAY = 24
 
 def get_date_range(today, N, report_type="sponsors"):
   #return date(2023, 3, 15), date(2023, 5, 14)
-  #return date(2023, 4, 1), date(2023, 4, 30)
+  #return date(2023, 6, 1), date(2023, 8, 30)
   # argparse restricts values of N
   def subtract_months(mydate, M):
     year, month = mydate.year, mydate.month
