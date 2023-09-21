@@ -265,6 +265,12 @@ To compute CPU-hours (not CPU-seconds) for user `msbc` on the cluster `perseus`:
 $ sacct -u msbc -X -n -M perseus -S 2020-05-15T00:00:00 -E 2021-05-14T23:59:59 -o cputimeraw | awk '{sum += $1} END {print int(sum/3600)}'
 ```
 
+List jobs of user `aturing` on the cluster `tiger2` on the partition `cpu` sorted by CPU-seconds:
+
+```
+$ sacct -u aturing -X -P -n -M tiger2 -r cpu -S 2023-08-01T00:00:00 -E 2023-08-31T23:59:59 -o jobid,cputimeraw,start,nnodes,ncpus,jobname | sort -k2 -n -t'|' -r | sed 's/|/\t/g'
+```
+
 CPU-hours of GPU jobs on Stellar by users in cbe account (watch out for accounts with a comma in the name like "astro,kunz"):
 
 ```
