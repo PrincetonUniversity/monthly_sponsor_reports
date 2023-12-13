@@ -308,6 +308,13 @@ do
 done
 ```
 
+Percentage of available GPU-hours used on cryoem:
+
+```
+$ DAYS=90; GPUS=136; PARTITION=cryoem; sacct -M della -a -X -P -n -S $(date -d"${DAYS} days ago" +%F) -E now -o elapsedraw,alloctres,state --partition=${PARTITION} | grep gres/gpu=[1-9] | sed -E "s/\|.*gpu=/,/" | awk -v gpus=${GPUS} -v days=${DAYS} -F"," '{sum += $1*$2} END {print "GPU-hours used = "int(100*sum/3600/24/gpus/days)"%"}'
+GPU-hours used = 10%
+```
+
 ## Be Aware
 
 - A sponsor will only receive a report if one of their users ran at least one job in the reporting period.  
