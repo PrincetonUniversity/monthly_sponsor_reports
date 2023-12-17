@@ -28,6 +28,7 @@ from email.mime.text import MIMEText
 # enter the gpu partitions here
 GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)",
                           "della__cli",
+                          "della__pli",
                           "della__gpu",
                           "della__gpu-ee(gpu)",
                           "della__gputest",
