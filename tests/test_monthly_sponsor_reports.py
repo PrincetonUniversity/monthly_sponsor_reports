@@ -19,6 +19,7 @@ class TestDateRange(unittest.TestCase):
         assert msr.get_date_range(date(2022, 11,  1), 5, report_type="sponsors") == (date(2022,  6,  1), date(2022, 10, 31))
         assert msr.get_date_range(date(2024,  3,  1), 5, report_type="sponsors") == (date(2023, 10,  1), date(2024,  2, 29))
         assert msr.get_date_range(date(2022,  5,  1), 1, report_type="sponsors") == (date(2022,  4,  1), date(2022,  4, 30))
+        assert msr.get_date_range(date(2024,  1,  2), 3, report_type="sponsors") == (date(2023, 10,  1), date(2023, 12, 31))
         assert msr.get_date_range(date(2022,  5, 15), 1, report_type="users")    == (date(2022,  4, 15), date(2022,  5, 14))
         assert msr.get_date_range(date(2022,  1, 15), 1, report_type="users")    == (date(2021, 12, 15), date(2022,  1, 14))
         assert msr.get_date_range(date(2022, 12, 15), 1, report_type="users")    == (date(2022, 11, 15), date(2022, 12, 14))
