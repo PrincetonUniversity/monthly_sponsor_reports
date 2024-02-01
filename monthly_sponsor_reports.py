@@ -320,7 +320,7 @@ def create_user_report(name, netid, start_date, end_date, body):
          'consumes 8 GPU-hours. CPU-eff is the CPU efficiency. GPU-eff is the '
          'GPU efficiency which is equivalent to the GPU utilization (as obtained by the "nvidia-smi" command). '
          'If your rank is 5/20 then you used the fifth most CPU-hours (or GPU-hours) of the 20 users. The Sponsor column indicates the NetID of your '
-         'cluster sponsor. If the cluster sponsor is incorrect then please notify CSES by replying to this email. '
+         'cluster sponsor. If the cluster sponsor is incorrect then please notify Research Computing by replying to this email. '
   )
   report += "\n".join(textwrap.wrap(defs, width=80))
   report += "\n"
@@ -356,7 +356,7 @@ def create_user_report(name, netid, start_date, end_date, body):
   #""")
   report += "\n"
   reply = (
-  'Replying to this email will open a ticket with CSES. Please reply '
+  'Replying to this email will open a ticket with Research Computing. Please reply '
   'with questions, changes to your sponsorship or to unsubscribe from these reports.'
   )
   report += "\n".join(textwrap.wrap(reply, width=80))
@@ -390,7 +390,7 @@ def create_report(name, sponsor, start_date, end_date, body):
   report += "\n".join(textwrap.wrap(footer, width=75))
   report += "\n\n"
   footer = (
-  "Replying to this email will open a ticket with CSES. Please reply "
+  "Replying to this email will open a ticket with Research Computing. Please reply "
   "with questions/comments or to unsubscribe from these reports."
   )
   report += "\n".join(textwrap.wrap(footer, width=75))
