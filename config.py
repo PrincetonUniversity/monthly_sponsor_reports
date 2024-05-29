@@ -67,6 +67,7 @@ ADMIN_FRAC = 0.05
 CORRECTED_FULL_NAMES = [("cpena", "Catherine J. Pena"),
                         ("javalos", "Jose L. Avalos"),
                         ("alemay", "Amelie Lemay"),
+                        ("simoes", "Tiago R. Simoes"),
                         ("alvaros", "Alvaro Luna")]
 
 '''Rename partitions. This is useful for dealing with long
