@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 
+# ls -ld *[[:upper:]]* | tr -s ' ' | awk -F" " '{print $2,$3","$9}' > ~/sponsor_fileset
 
 ############################
 
