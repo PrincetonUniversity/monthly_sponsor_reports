@@ -28,6 +28,7 @@ from email.mime.text import MIMEText
 # enter the gpu partitions here
 GPU_CLUSTER_PARTITIONS = ["della__cryoem(gpu)",
                           "della__cli",
+                          "della__gpu-shared",
                           "della__pli",
                           "della__pli-c",
                           "della__pli-p",
@@ -613,8 +614,6 @@ if __name__ == "__main__":
 
       if args.email:
         send_email(report, f"{sponsor}@princeton.edu", start_date, end_date)
-        if sponsor == "macohen": send_email(report, "bdorland@pppl.gov", start_date, end_date)
-        if sponsor == "macohen": send_email(report, "pbisbal@pppl.gov"  , start_date, end_date)
         if random() < 0.025: send_email(report, "halverson@princeton.edu", start_date, end_date)
   else:
     sys.exit("Error: report_type does not match choices.")
