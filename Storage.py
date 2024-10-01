@@ -3,7 +3,8 @@ import pandas as pd
 
 # ls -ld *[[:upper:]]* | tr -s ' ' | awk -F" " '{print $3","$4","$9}' > ~/sponsor_fileset
 # cborca is 155500
-$ ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uidNumber=155500
+# ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uidNumber=155500
+# not assigned IMAI
 
 ############################
 
