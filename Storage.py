@@ -17,6 +17,12 @@ import pandas as pd
 # {'projects2.storage.SOFTWARE': 139657216, 'projects2.storage.j': 6511706112, 'della.gpfs.root': 332345171968,
 #  'della.gpfs.DATASETS': 8037620023296, 'stellar.gpfs.root': 115609239552, 'tiger2.gpfs.root': 92154888192}
 
+# mike g
+# (Pdb) block_usage.d["230858"]
+# {'projects2.storage.PERFORM': 3402780647424, 'projects2.storage.ZHONGE': 4322074624,
+# 'projects2.storage.CRYOEM': 0, 'della.gpfs.root': 998336954368, 'della.gpfs.ZHONGE': 1148623790080, 'tiger2.gpfs.root': 0}
+
+
 ############################
 
 params = {'query': "gpfs_quota_block_limit_hard_bytes{}"}
