@@ -12,6 +12,11 @@ import pandas as pd
 # filesets['pnisysad'] = ['PNI']
 # filesets['116515'] = ['PPPL']
 
+
+# (Pdb) block_usage.d["150340"]
+# {'projects2.storage.SOFTWARE': 139657216, 'projects2.storage.j': 6511706112, 'della.gpfs.root': 332345171968,
+#  'della.gpfs.DATASETS': 8037620023296, 'stellar.gpfs.root': 115609239552, 'tiger2.gpfs.root': 92154888192}
+
 ############################
 
 params = {'query': "gpfs_quota_block_limit_hard_bytes{}"}
