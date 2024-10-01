@@ -9,6 +9,8 @@ import pandas as pd
 # filesets['alexeys'] = ['FRNN']
 # filesets['sjardin'] = ['M3DC1']
 # filesets['131126'] = ['PHYSICS']
+# filesets['pnisysad'] = ['PNI']
+# filesets['116515'] = ['PPPL']
 
 ############################
 
