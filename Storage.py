@@ -5,6 +5,9 @@ import pandas as pd
 # cborca is 155500
 # ldapsearch -x -H ldap://ldap01.rc.princeton.edu -b dc=rc,dc=princeton,dc=edu uidNumber=155500
 # not assigned IMAI
+# filesets['jjara'] = ['JJARA']
+# filesets['alexeys'] = ['FRNN']
+# filesets['sjardin'] = ['M3DC1']
 
 ############################
 
