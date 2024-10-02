@@ -1,3 +1,6 @@
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 import os
 import sys
 import math
@@ -519,6 +522,35 @@ if __name__ == "__main__":
   print(f"Total users:    {users.size}")
   print(f"Total jobs:     {df.shape[0]}")
 
+  ###########
+  # storage #
+  ###########
+  import filesets as fs
+  from DataStorage import DataStorage
+  block_usage = DataStorage("gpfs_quota_block_usage_bytes")
+  block_limit = DataStorage("gpfs_quota_block_limit_hard_bytes")
+  files_usage = DataStorage("gpfs_quota_files_usage")
+  files_limit = DataStorage("gpfs_quota_files_limit_hard")
+  # uids
+  uid_user = pd.read_csv("master.uids",
+                         names=["uid", "username"],
+                         dtype={"uid": str, "username": str})
+  uid_user.dropna(inplace=True)
+  uid_user = uid_user[uid_user.uid != "0"]
+  uid2user = dict(zip(uid_user.uid.values, uid_user.username.values))
+  user2uid = dict(zip(uid_user.username.values, uid_user.uid.values))
+  with open("tigress_user_changes_josko_1oct2024.log") as f:
+      lines = f.readlines()
+  older = {"0": "root"}
+  older_inverse = {"root": 0}
+  for line in lines:
+      if "- Added user " in line and line.count("(") > 1:
+          uid = line.split("(")[1].split()[0]
+          netid = line.split("(")[0].strip().split()[-1]
+          older[uid] = netid
+          older_inverse[netid] = uid
+   
+
   if args.report_type == "users":
     assert datetime.now().strftime("%-d") == "15", "Script will only run on 15th of the month"
     # remove unsubscribed users and those that left the university
@@ -607,6 +639,98 @@ if __name__ == "__main__":
         if i == 0: body += "-" * max_width + "\n"
       body += "\n"
 
+      ###########
+      # storage #
+      ###########
+      def base2to10(x):
+          if x < 1024:
+              return f"{x} B"
+          elif x < 1024**2:
+              return f"{round(x / 1024)} KB"
+          elif x < 1024**3:
+              return f"{round(x / 1024**2)} MB"
+          elif x < 1024**4:
+              return f"{round(x / 1024**3)} GB"
+          elif x < 1024**5:
+              return f"{round(x / 1024**4)} TB"
+          elif x < 1024**6:
+              return f"{round(x / 1024**5)} PB"
+         
+      def extract_proportion(x):
+          if isinstance(x, int):
+              return "(100%)"
+          return x.split()[1]
+
+      def combine_amount_proportion(amt, pro):
+          if pro == "(100%)":
+              return f"{amt} {pro}"
+          mylen = len(pro)
+          pro = " " * (6 - mylen) + pro
+          return amt + pro
+
+      # /scratch/gpfs
+      for cluster in ("della", "stellar", "tiger"):
+          cl = sp[sp.cluster == cluster]
+          if not cl.empty:
+              st = []
+              for n in cl.netid:
+                  uid = None
+                  if n in user2uid:
+                      uid = user2uid[n]
+                  elif n in older_inverse:
+                      uid = older_inverse[n]
+                  #else exit
+                  key = f"{cluster}.gpfs.root"
+                  #print(cluster, n, uid, key)
+                  if uid and key in block_usage.d[uid]:
+                      amount = block_usage.d[uid][key]
+                      if amount:
+                          st.append([netid, uid, amount])
+              if st:
+                  pass
+ 
+
+      # /projects2
+      if sponsor in fs.filesets:
+          not_shown_yet = True
+          for myfs in fs.filesets[sponsor]:
+              st = []
+              for uid in block_usage.d:
+                  if uid == myfs:
+                      continue
+                  key = f"projects2.storage.{myfs}"
+                  if key in block_usage.d[uid]:
+                      netid = "UNKNOWN"
+                      if uid in uid2user:
+                          netid = uid2user[uid]
+                      elif uid in older:
+                          netid = older[uid]
+                      amount = block_usage.d[uid][key]
+                      if amount:
+                          st.append([netid, uid, amount])
+              if st:
+                  if not_shown_yet:
+                      body += "\n" + "We are beginning to include storage information in these reports. Below is \nyour accounting for /projects as of today:\n\n"
+                      not_shown_yet = False
+                  st = pd.DataFrame(st, columns=["NetID", "UID", "Amount2"])
+                  st.sort_values("Amount2", ascending=False, inplace=True)
+                  st["base10"] = st.Amount2.apply(base2to10)
+                  st = add_proportion_in_parenthesis(st.copy(), "Amount2", replace=True)
+                  st["proportion"] = st["Amount2"].apply(extract_proportion)
+                  st["    Amount    "] = st.apply(lambda row: combine_amount_proportion(row["base10"], row["proportion"]), axis="columns")
+                  cols = ["NetID", "UID", "    Amount    "]
+                  st_str = st[cols].to_string(index=False, justify="center")
+                  max_width = max(map(len, st_str.split("\n")))
+                  heading = f"/projects/{myfs}"
+                  padding = " " * max(1, math.ceil((max_width - len(heading)) / 2))
+                  body += "\n"
+                  body += padding + heading + padding + "\n"
+                  body += "-" * max_width + "\n"
+                  for i, line in enumerate(st_str.split("\n")):
+                      body += line + "\n"
+                      if i == 0: body += "-" * max_width + "\n"
+                  body += "\n"
+ 
       # create report
       name = get_full_name_from_ldap(sponsor, verbose=True)
       report = create_report(name, sponsor, start_date, end_date, body)
