@@ -102,30 +102,32 @@ def get_full_name_from_ldap(netid, use_rc=False, include_netid=False, verbose=Tr
 
 
 def get_full_name_of_user_from_log(netid, flnm="tigress_user_changes.log"):
-  """Return the full name of the user from the log file."""
-  with open(flnm, "r") as f:
-      lines = f.readlines()
-  pattern = f" {netid} "
-  logname = None
-  for line in lines:
-      if pattern in line:
-          if f" Added user {netid} (" in line:
-              logname = line.split(f" Added user {netid} (")[-1].split(")")[0].split(" - ")[-1]
-          if f" Removed user {netid} (" in line:
-              logname = line.split(f" Removed user {netid} (")[-1].split(")")[0]
-  return logname
+    """Return the full name of the user from the log file. Loop over all
+       lines (i.e., do not return on first match)."""
+    with open(flnm, "r") as f:
+        lines = f.readlines()
+    pattern = f" {netid} "
+    logname = None
+    for line in lines:
+        if pattern in line:
+            if f" Added user {netid} (" in line:
+                logname = line.split(f" Added user {netid} (")[-1].split(")")[0].split(" - ")[-1]
+            if f" Removed user {netid} (" in line:
+                logname = line.split(f" Removed user {netid} (")[-1].split(")")[0]
+    return logname
 
 
 def get_sponsor_netid_of_user_from_log(netid, flnm="tigress_user_changes.log"):
-    """Return the sponsor netid for a given user netid from the log file."""
+    """Return the sponsor netid for a given user netid from the log file.
+       Loop over all lines (i.e., do not return on first match)."""
     with open(flnm, "r") as f:
         lines = f.readlines()
-  pattern = f" {netid} "
-  sponsor = None
-  for line in lines:
-      if pattern in line:
-          if f" Added user {netid} " in line and " with sponsor " in line:
-              sponsor = line.split(" with sponsor ")[-1].split()[0]
-          if f" Removed user {netid} " in line and " sponsor " in line:
-              sponsor = line.split(" sponsor ")[-1].split(";")[0]
-  return sponsor
+    pattern = f" {netid} "
+    sponsor = None
+    for line in lines:
+        if pattern in line:
+            if f" Added user {netid} " in line and " with sponsor " in line:
+                sponsor = line.split(" with sponsor ")[-1].split()[0]
+            if f" Removed user {netid} " in line and " sponsor " in line:
+                sponsor = line.split(" sponsor ")[-1].split(";")[0]
+    return sponsor
