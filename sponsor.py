@@ -3,6 +3,7 @@ import subprocess
 import pandas as pd
 import base64
 import unicodedata
+import re
 
 
 def strip_accents(s):
@@ -104,7 +105,7 @@ def get_full_name_from_ldap(netid, use_rc=False, include_netid=False, verbose=Tr
 def get_full_name_of_user_from_log(netid, flnm="tigress_user_changes.log"):
     """Return the full name of the user from the log file. Loop over all
        lines (i.e., do not return on first match)."""
-    with open(flnm, "r") as f:
+    with open(flnm, "r", encoding="utf-8") as f:
         lines = f.readlines()
     pattern = f" {netid} "
     logname = None
@@ -120,7 +121,7 @@ def get_full_name_of_user_from_log(netid, flnm="tigress_user_changes.log"):
 def get_sponsor_netid_of_user_from_log(netid, flnm="tigress_user_changes.log"):
     """Return the sponsor netid for a given user netid from the log file.
        Loop over all lines (i.e., do not return on first match)."""
-    with open(flnm, "r") as f:
+    with open(flnm, "r", encoding="utf-8") as f:
         lines = f.readlines()
     pattern = f" {netid} "
     sponsor = None
@@ -131,3 +132,46 @@ def get_sponsor_netid_of_user_from_log(netid, flnm="tigress_user_changes.log"):
             if f" Removed user {netid} " in line and " sponsor " in line:
                 sponsor = line.split(" sponsor ")[-1].split(";")[0]
     return sponsor
+
+
+def build_uid_username_dictionaries(uids: set[str], flnm="tigress_user_changes.log"):
+    """Return a uid-to-username and username-to-uid dictionary for a given
+       set of uids. Each uid is stored as a string."""
+    uid2user = {"0": "root"}
+    user2uid = {"root": "0"}
+    if os.path.isfile(flnm):
+        with open(flnm, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        pattern = r"Added user \w+ \(\d+ -"
+        for line in lines:
+            match = re.findall(pattern, line)
+            if match:
+                uid = match[0].split("(")[1].split()[0]
+                netid = match[0].split("(")[0].strip().split()[-1]
+                assert uid.isnumeric(), f"{uid} is not numeric: {line}"
+                uid2user[uid] = netid
+                user2uid[netid] = uid
+    else:
+        print(f"{flnm} was not found.")
+    for uid in uids:
+        if uid not in uid2user:
+            found = False
+            ldap = "ldap://ldap01.rc.princeton.edu"
+            cmd = f"ldapsearch -x -H {ldap} -b dc=rc,dc=princeton,dc=edu uidNumber={uid} uid"
+            output = subprocess.run(cmd,
+                                    stdout=subprocess.PIPE,
+                                    shell=True,
+                                    timeout=5,
+                                    text=True,
+                                    check=True)
+            lines = output.stdout.split('\n')
+            for line in lines:
+                if line.startswith("uid: "):
+                    netid = line.split()[1]
+                    uid2user[uid] = netid
+                    user2uid[netid] = uid
+                    found = True
+                    break
+            if not found:
+                print(f"A netid for uid {uid} was not found.")
+    return uid2user, user2uid
