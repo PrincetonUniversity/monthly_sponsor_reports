@@ -197,6 +197,7 @@ def user_and_sponsor_with_dept(df: pd.DataFrame, cluster="della", verbose=False,
     cols = ["SPONSOR_NAME", "SPONSOR_DEPT"]
     df[cols] = pd.DataFrame(df["sponsor_ldap"].tolist(), index=df.index)
     df["DEPT"] = df.apply(lambda row: row["SPONSOR_DEPT"] if row["DEPT"] == "UNSPECIFIED" else row["DEPT"], axis="columns")
-    df.index += 1
     df.sort_values("DEPT", inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    df.index += 1
     return df[["NAME", "NETID", "NETID_TRUE", "DEPT", "POSITION", "SPONSOR_NAME", "SPONSOR_DEPT"]]
