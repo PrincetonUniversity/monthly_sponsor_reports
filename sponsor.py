@@ -175,3 +175,28 @@ def build_uid_username_dictionaries(uids: set[str], flnm="tigress_user_changes.l
             if not found:
                 print(f"A netid for uid {uid} was not found.")
     return uid2user, user2uid
+
+
+def user_and_sponsor_with_dept(df: pd.DataFrame, cluster="della", verbose=False, level=0):
+    """Given the output of ldap_plus, find the sponsor name
+       and department for each user. If the user's department is null
+       then replace it with the sponsor department."""
+    try:
+        # wget https://raw.githubusercontent.com/PrincetonUniversity/monthly_sponsor_reports/refs/heads/main/sponsor.py
+        from dossier import ldap_plus
+    except ModuleNotFoundError:
+        print("dossier module not found. Exiting.")
+        return pd.DataFrame()
+    df["sponsor_dict"] = df.NETID_TRUE.apply(get_sponsor_netid_per_cluster_dict_from_ldap)
+    df["sponsor"] = df.sponsor_dict.apply(lambda d: d[cluster])
+    def sponsor_name_and_dept(sponsor_netid, level):
+        props = ldap_plus([sponsor_netid], level=level)
+        heading, values = props[0], props[1]
+        return values[0], values[1]
+    df["sponsor_ldap"] = df.sponsor.apply(lambda sponsor_netid: sponsor_name_and_dept(sponsor_netid, level=level))
+    cols = ["SPONSOR_NAME", "SPONSOR_DEPT"]
+    df[cols] = pd.DataFrame(df["sponsor_ldap"].tolist(), index=df.index)
+    df["DEPT"] = df.apply(lambda row: row["SPONSOR_DEPT"] if row["DEPT"] == "UNSPECIFIED" else row["DEPT"], axis="columns")
+    df.index += 1
+    df.sort_values("DEPT", inplace=True)
+    return df[["NAME", "NETID", "NETID_TRUE", "DEPT", "POSITION", "SPONSOR_NAME", "SPONSOR_DEPT"]]
