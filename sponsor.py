@@ -182,7 +182,7 @@ def user_and_sponsor_with_dept(df: pd.DataFrame, cluster="della", verbose=False,
        and department for each user. If the user's department is null
        then replace it with the sponsor department."""
     try:
-        # wget https://raw.githubusercontent.com/PrincetonUniversity/monthly_sponsor_reports/refs/heads/main/sponsor.py
+        # wget https://raw.githubusercontent.com/jdh4/tigergpu_visualization/refs/heads/master/dossier.py
         from dossier import ldap_plus
     except ModuleNotFoundError:
         print("dossier module not found. Exiting.")
