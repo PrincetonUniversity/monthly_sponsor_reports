@@ -1,3 +1,5 @@
+**December 13, 2024: This code is still being generalized for use at all institutions. Please check back around February 2024.**
+
 # Monthly Sponsor and User Reports
 
 The software in this repo generates monthly sponsor and user reports for the Research Computing clusters. Below is an example sponsor report:
