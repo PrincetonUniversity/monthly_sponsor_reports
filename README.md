@@ -285,6 +285,12 @@ CPU-hours for each account on Stellar:
 for act in `sacct -S 2022-04-01 -M stellar -a -X -n -o account | sort | uniq`; do printf "$act "; sacct -o cputimeraw -a -P -X -n --starttime=2022-04-01 -E now --accounts=${act} | awk '{sum += $1} END {print int(sum/3600)}';  done
 ```
 
+GPU-hours for a given user:
+
+```
+sacct -M stellar -r gpu -u ps9551 -X -P -n -S 2025-05-01T00:00:00 -E now -o elapsedraw,alloctres,state | grep gres/gpu=[1-9] | grep -v RUNNING | sed -E "s/\|.*gpu=/,/" | awk -F"," '{sum += $1*$2} END {print int(sum/3600)}'
+```
+
 Compute cpu-hours for certain users:
 
 ```bash
