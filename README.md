@@ -1,4 +1,4 @@
-**February 22, 2025: This code is still being generalized for use at all institutions. Please check back around May 2025.**
+**February 22, 2025: This code is still being generalized for use at all institutions.**
 
 # Monthly Sponsor and User Reports
 
